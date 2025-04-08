@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, LogOut } from 'lucide-react'
+import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, LogOut, FolderPlus, MessageSquarePlus } from 'lucide-react'
 import './App.css'
 
 import { Button } from './components/ui/button'
@@ -209,6 +209,22 @@ function App() {
           >
             <Plus size={18} />
             <span>Nouveau QCM</span>
+          </button>
+          
+          <button 
+            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+            onClick={() => alert('Fonctionnalité en développement')}
+          >
+            <FolderPlus size={18} />
+            <span>Nouveau dossier</span>
+          </button>
+          
+          <button 
+            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+            onClick={() => alert('Fonctionnalité en développement')}
+          >
+            <MessageSquarePlus size={18} />
+            <span>Nouveau chat</span>
           </button>
         </div>
 
