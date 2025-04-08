@@ -21,8 +21,24 @@ const AuthPage: React.FC = () => {
           <span className="text-xl font-semibold">PDF QCM</span>
         </div>
 
+        {/* Navigation */}
+        <div className="flex-1 p-4 flex flex-col gap-3">
+          <button 
+            className={`w-full ${isLogin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-zinc-800 hover:bg-zinc-700'} text-white py-2 px-4 rounded-md flex items-center justify-center gap-2`}
+            onClick={() => setIsLogin(true)}
+          >
+            <span>Connexion</span>
+          </button>
+          
+          <button 
+            className={`w-full ${!isLogin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-zinc-800 hover:bg-zinc-700'} text-white py-2 px-4 rounded-md flex items-center justify-center gap-2`}
+            onClick={() => setIsLogin(false)}
+          >
+            <span>Inscription</span>
+          </button>
+        </div>
+        
         {/* Bottom actions */}
-        <div className="flex-1"></div>
         <div className="p-4 border-t border-zinc-800">
           <div className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer">
             <span>FR</span>
