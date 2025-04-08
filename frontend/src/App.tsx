@@ -1,19 +1,22 @@
 import { useState, useRef } from 'react'
-import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, Globe } from 'lucide-react'
+import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, LogOut } from 'lucide-react'
 import './App.css'
 
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Input } from '@/components/ui/input'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Label } from '@/components/ui/label'
-import { Progress } from '@/components/ui/progress'
+import { Button } from './components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from './components/ui/alert'
+import { Input } from './components/ui/input'
+import { RadioGroup, RadioGroupItem } from './components/ui/radio-group'
+import { Label } from './components/ui/label'
+import { Progress } from './components/ui/progress'
 
 import { QCMResponse } from './types'
+import { useAuth } from './components/auth/AuthContext'
+import AuthPage from './components/auth/AuthPage'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function App() {
+  const { user, token, logout } = useAuth();
   const [file, setFile] = useState<File | null>(null)
   const [fileId, setFileId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -60,6 +63,9 @@ function App() {
 
       const response = await fetch(`${API_URL}/upload-pdf`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       })
 
@@ -88,6 +94,9 @@ function App() {
 
       const response = await fetch(`${API_URL}/generate-qcm/${fileId}`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       })
 
@@ -142,6 +151,10 @@ function App() {
     return correctAnswers
   }
 
+  if (!token || !user) {
+    return <AuthPage />;
+  }
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Sidebar */}
@@ -152,6 +165,20 @@ function App() {
             <span className="text-white font-bold">Q</span>
           </div>
           <span className="text-xl font-semibold">PDF QCM</span>
+        </div>
+
+        {/* User info */}
+        <div className="p-4 border-b border-zinc-800">
+          <div className="bg-zinc-800 p-3 rounded-md">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
+                {user.email.charAt(0).toUpperCase()}
+              </div>
+              <div className="truncate">
+                <div className="text-sm font-medium truncate">{user.email}</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* PDF Info - Only shown when a PDF is uploaded */}
@@ -182,9 +209,12 @@ function App() {
 
         {/* Bottom actions */}
         <div className="p-4 border-t border-zinc-800">
-          <div className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer">
-            <Globe size={18} />
-            <span>FR</span>
+          <div 
+            className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
+            onClick={logout}
+          >
+            <LogOut size={18} />
+            <span>Déconnexion</span>
           </div>
         </div>
       </div>
