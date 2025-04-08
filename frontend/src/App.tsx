@@ -159,12 +159,17 @@ function App() {
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Sidebar */}
       <div className="w-72 bg-black text-white flex flex-col">
-        {/* Logo */}
+        {/* Logo with User Name */}
         <div className="p-4 flex items-center gap-2">
           <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
             <span className="text-white font-bold">Q</span>
           </div>
-          <span className="text-xl font-semibold">PDF QCM</span>
+          <div className="flex flex-col">
+            <span className="text-xl font-semibold">PDF QCM</span>
+            <span className="text-sm text-purple-400 font-medium">
+              Bonjour, {user.email.split('@')[0]}
+            </span>
+          </div>
         </div>
 
         {/* User info */}
