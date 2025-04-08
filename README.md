@@ -13,6 +13,8 @@ Application de génération de questionnaires à choix multiples (QCM) à partir
 - Génération de QCM à partir du contenu des PDF via LLM
 - Interface utilisateur intuitive inspirée de ChatPDF
 - Système de quiz interactif avec notation automatique
+- Authentification avec Google OAuth
+- Système d'authentification classique (email/mot de passe)
 
 ## Prérequis
 
@@ -20,14 +22,25 @@ Application de génération de questionnaires à choix multiples (QCM) à partir
 - Node.js 18+
 - Poetry (pour la gestion des dépendances Python)
 - Clé API OpenAI
+- Identifiants OAuth Google (pour l'authentification Google)
 
 ## Installation
 
 ### Backend
 
-1. Configurer la clé API OpenAI dans `backend/.env`
+1. Configurer les variables d'environnement dans `backend/.env`
    ```
+   # OpenAI API Key
    OPENAI_API_KEY=votre-clé-api-openai
+   
+   # Google OAuth Configuration
+   GOOGLE_CLIENT_ID=votre-client-id-google
+   GOOGLE_CLIENT_SECRET=votre-client-secret-google
+   FRONTEND_URL=http://localhost:5173
+   
+   # JWT Secret Keys
+   JWT_SECRET=votre-clé-secrète-jwt
+   SECRET_RESET=votre-clé-secrète-reset
    ```
 
 2. Installer les dépendances et démarrer le serveur
@@ -76,6 +89,18 @@ L'application est prête à être déployée sur un serveur. Vous pouvez utilise
 
 - Backend: Fly.io, Heroku, AWS, etc.
 - Frontend: Vercel, Netlify, GitHub Pages, etc.
+
+### Configuration de l'authentification Google
+
+Pour configurer l'authentification Google:
+
+1. Créez un projet dans la [Console Google Cloud](https://console.cloud.google.com/)
+2. Configurez l'écran de consentement OAuth
+3. Créez des identifiants OAuth 2.0 (ID client et secret)
+4. Ajoutez les URI de redirection autorisés:
+   - `http://localhost:5173/auth/callback` (développement)
+   - `https://votre-domaine.com/auth/callback` (production)
+5. Mettez à jour les variables d'environnement dans le backend avec vos identifiants
 
 ## Licence
 
