@@ -5,8 +5,6 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-from app.models import User
-
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 
@@ -29,4 +27,5 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+    from app.models import User
     yield SQLAlchemyUserDatabase(session, User)
