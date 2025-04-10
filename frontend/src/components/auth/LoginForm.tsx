@@ -21,7 +21,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/auth/google/login`;
+    window.location.href = `https://user:42b92972a330850edc2686c9df1d015c@pdf-qcm-generator-tunnel-ox62185z.devinapps.com/auth/google/login`;
   };
 
   return (
