@@ -10,4 +10,7 @@ COPY . .
 ENV PORT=8000
 ENV PYTHONPATH=/app
 
+# Remove poetry files to avoid confusion
+RUN rm -f pyproject.toml poetry.lock
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
