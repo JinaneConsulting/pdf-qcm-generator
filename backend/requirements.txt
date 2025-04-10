@@ -1,6 +1,6 @@
 fastapi==0.115.12
 uvicorn==0.34.0
-python-multipart==0.0.20
+python-multipart==0.0.7
 langchain==0.3.23
 langchain-openai==0.3.12
 pypdf==5.4.0
@@ -10,3 +10,5 @@ sqlalchemy==2.0.29
 httpx-oauth==0.13.2
 python-jose==3.3.0
 python-dotenv==1.0.1
+aiosqlite==0.20.0
+bcrypt==4.1.2
