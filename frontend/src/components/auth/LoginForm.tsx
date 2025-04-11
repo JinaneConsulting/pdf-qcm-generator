@@ -10,6 +10,8 @@ interface LoginFormProps {
   onToggleForm: () => void;
 }
 
+const API_URL = 'https://user:42b92972a330850edc2686c9df1d015c@pdf-qcm-generator-tunnel-ox62185z.devinapps.com';
+
 const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
@@ -21,7 +23,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `https://user:42b92972a330850edc2686c9df1d015c@pdf-qcm-generator-tunnel-ox62185z.devinapps.com/auth/google/login`;
+    window.location.href = `${API_URL}/auth/google/login`;
   };
 
   return (
