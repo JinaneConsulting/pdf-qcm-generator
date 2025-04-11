@@ -18,6 +18,7 @@ google_oauth_client = GoogleOAuth2(
 )
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://pdf-qcm-generator-tunnel-ox62185z.devinapps.com")
 
 async def get_oauth_token(
     request: Request,
@@ -43,7 +44,7 @@ async def google_login():
     """
     Redirect to Google login page
     """
-    redirect_uri = "https://pdf-qcm-generator-x7ndp57u.devinapps.com/auth/callback"
+    redirect_uri = f"{BACKEND_URL}/auth/callback"
     return await google_oauth_client.get_authorization_url(
         redirect_uri,
         scope=["email", "profile"],
@@ -58,7 +59,7 @@ async def google_callback(
     """
     Handle Google OAuth callback
     """
-    redirect_uri = "https://pdf-qcm-generator-x7ndp57u.devinapps.com/auth/callback"
+    redirect_uri = f"{BACKEND_URL}/auth/callback"
     
     try:
         token, email = await get_oauth_token(
