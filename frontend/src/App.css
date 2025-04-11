@@ -1,99 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap');
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AuthPage from './components/auth/AuthPage';
+import AuthCallback from './components/auth/AuthCallback';
+import Dashboard from './components/Dashboard'; // Assurez-vous que ce composant existe
+import { useAuth } from './components/auth/AuthContext';
+import { AuthProvider } from './components/auth/AuthContext';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: #f5f5f5;
-  font-family: 'Inter', sans-serif;
-}
-
-.font-handwriting {
-  font-family: 'Caveat', cursive;
-  font-size: 1.25rem;
-  line-height: 1.2;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Gradient background */
-.bg-gradient-custom {
-  background: linear-gradient(to bottom right, #f0f4ff, #e6eeff, #f5f0ff);
-}
-
-/* Custom styles for the PDF upload area */
-.pdf-upload-area {
-  border: 2px dashed #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.pdf-upload-area:hover {
-  border-color: #94a3b8;
-  background-color: #f8fafc;
-}
-
-/* Animation for loading states */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+// Composant pour les routes protégées
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { token } = useAuth();
+  
+  if (!token) {
+    return <Navigate to="/login" replace />;
   }
-  50% {
-    opacity: 0.5;
-  }
-}
+  
+  return <>{children}</>;
+};
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+const AppRoutes: React.FC = () => {
+  return (
+    <Routes>
+      <Route path="/login" element={<AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+};
 
-/* Sidebar styles */
-.sidebar {
-  background-color: #111111;
-  color: #ffffff;
-  width: 280px;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
 
-/* Question card styles */
-.question-card {
-  border-radius: 0.75rem;
-  background-color: white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s ease;
-}
-
-.question-card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* Custom button styles */
-.btn-primary {
-  background-color: #4f46e5;
-  color: white;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background-color: #4338ca;
-}
+export default App;
