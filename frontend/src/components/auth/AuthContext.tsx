@@ -13,6 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  setToken: (token: string | null) => void;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -149,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         token,
+        setToken,
         isLoading,
         error,
         login,
