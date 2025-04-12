@@ -11,7 +11,15 @@ interface RegisterFormProps {
 }
 
 const API_BASE_URL = 'https://pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
-const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split('@')[1] : API_BASE_URL;
+const API_URL = import.meta.env.VITE_API_URL ? 
+  import.meta.env.VITE_API_URL.split('@')[1] : 
+  API_BASE_URL;
+
+const API_CREDENTIALS = import.meta.env.VITE_API_URL ? 
+  import.meta.env.VITE_API_URL.split('@')[0].replace('https://', '') : 
+  'user:f6f93d86265ff53a7a7e0ac885597bf3';
+
+const BASIC_AUTH = `Basic ${btoa(API_CREDENTIALS)}`;
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
   const { register, isLoading, error } = useAuth();
@@ -32,8 +40,24 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
     await register(email, password);
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google/login`;
+  const handleGoogleLogin = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/google/login`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization-Tunnel': BASIC_AUTH
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.authorization_url;
+      } else {
+        console.error('Failed to get Google login URL');
+      }
+    } catch (error) {
+      console.error('Error initiating Google login:', error);
+    }
   };
 
   return (
