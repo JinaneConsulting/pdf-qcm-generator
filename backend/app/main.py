@@ -6,6 +6,7 @@ import os
 from typing import Optional, List
 import uuid
 
+
 from app.models import PDFUploadResponse, QCMResponse, User, UserRead, UserCreate, UserUpdate, UserPDF
 from app.pdf_processor import PDFProcessor
 from app.database import create_db_and_tables, get_async_session
@@ -26,6 +27,12 @@ app.add_middleware(
 
 pdf_processor = PDFProcessor()
 
+# Ajoute cette ligne pour activer l'inscription
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
 app.include_router(
     fastapi_users.get_auth_router(jwt_backend),
     prefix="/auth/jwt",
