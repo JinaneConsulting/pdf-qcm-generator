@@ -1,3 +1,5 @@
+### auth.py (modification partielle uniquement de la méthode concernée)
+
 import os
 import uuid
 from typing import Optional
@@ -14,6 +16,7 @@ from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDataba
 
 from app.database import get_user_db
 from app.models import User, AccessToken
+from app.email_utils import send_verification_email
 
 SECRET = os.environ.get("JWT_SECRET", "SECRET_KEY_FOR_JWT_PLEASE_CHANGE")
 SECRET_RESET = os.environ.get("SECRET_RESET", "SECRET_KEY_FOR_RESET_PLEASE_CHANGE")
@@ -53,7 +56,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, token: str, request: Optional[Request] = None
     ):
         send_verification_email(user.email, token)
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
