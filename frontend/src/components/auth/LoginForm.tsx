@@ -10,7 +10,7 @@ interface LoginFormProps {
   onToggleForm: () => void;
 }
 
-const API_URL = 'https://user:42b92972a330850edc2686c9df1d015c@pdf-qcm-generator-tunnel-ox62185z.devinapps.com';
+const API_URL = 'https://user:f6f93d86265ff53a7a7e0ac885597bf3@pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
 
 const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   const { login, isLoading, error } = useAuth();

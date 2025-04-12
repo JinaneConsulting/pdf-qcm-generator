@@ -1,49 +1,34 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import AuthPage from './components/auth/AuthPage';
-import AuthCallback from './components/auth/AuthCallback';
-import Dashboard from './components/Dashboard'; // Assurez-vous que ce composant existe
-import { useAuth } from './components/auth/AuthContext';
-import { AuthProvider } from './components/auth/AuthContext';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap');
 
-// Composant pour les routes protégées
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAuth();
-  
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-const AppRoutes: React.FC = () => {
-  return (
-    <Routes>
-      <Route path="/login" element={<AuthPage />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  );
-};
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
 
-const App: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
-};
+body {
+  color: rgb(var(--foreground-rgb));
+  background: #f5f5f5;
+  font-family: 'Inter', sans-serif;
+}
 
-export default App;
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Gradient background */
+.bg-gradient-custom {
+  background: linear-gradient(to bottom right, #f0f4ff, #e6eeff, #f5f0ff);
+}
