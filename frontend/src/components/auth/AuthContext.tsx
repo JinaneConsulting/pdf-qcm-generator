@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
-const API_URL = 'https://user:42b92972a330850edc2686c9df1d015c@pdf-qcm-generator-tunnel-ox62185z.devinapps.com';
+const API_BASE_URL = 'https://pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split('@')[1] : API_BASE_URL;
 
 interface User {
   id: string;
@@ -38,7 +39,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(true);
         const response = await fetch(`${API_URL}/users/me`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'X-API-Key': 'f6f93d86265ff53a7a7e0ac885597bf3'
           }
         });
         
@@ -69,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'X-API-Key': 'f6f93d86265ff53a7a7e0ac885597bf3'
         },
         body: new URLSearchParams({
           username: email,
@@ -87,7 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const userResponse = await fetch(`${API_URL}/users/me`, {
         headers: {
-          'Authorization': `Bearer ${data.access_token}`
+          'Authorization': `Bearer ${data.access_token}`,
+          'X-API-Key': 'f6f93d86265ff53a7a7e0ac885597bf3'
         }
       });
       
@@ -114,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-API-Key': 'f6f93d86265ff53a7a7e0ac885597bf3'
         },
         body: JSON.stringify({
           email,

@@ -10,7 +10,8 @@ interface RegisterFormProps {
   onToggleForm: () => void;
 }
 
-const API_URL = 'https://user:f6f93d86265ff53a7a7e0ac885597bf3@pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
+const API_BASE_URL = 'https://pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
+const API_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split('@')[1] : API_BASE_URL;
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
   const { register, isLoading, error } = useAuth();
