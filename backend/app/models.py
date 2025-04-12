@@ -6,8 +6,14 @@ from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from fastapi_users.db import SQLAlchemyBaseUserTable
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase, SQLAlchemyBaseAccessTokenTable
-
+from fastapi_users import schemas
 from app.database import Base
+
+class UserRead(schemas.BaseUser[uuid.UUID]):
+    pass
+
+class UserCreate(schemas.BaseUserCreate):
+    pass
 
 class User(SQLAlchemyBaseUserTable[uuid.UUID], Base):
     __tablename__ = "users"
