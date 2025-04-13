@@ -4,7 +4,7 @@ import { defineConfig, loadEnv } from "vite"
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  
+
   return {
     plugins: [react()],
     resolve: {
@@ -13,8 +13,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL)
+      'import.meta.env': Object.entries(env).reduce((prev, [key, val]) => {
+        prev[key] = JSON.stringify(val)
+        return prev
+      }, {} as Record<string, string>)
     }
   }
 })
-

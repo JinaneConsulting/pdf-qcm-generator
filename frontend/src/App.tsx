@@ -13,7 +13,20 @@ import { QCMResponse } from './types'
 import { useAuth } from './components/auth/AuthContext'
 import AuthPage from './components/auth/AuthPage'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL ;
+const API_CREDENTIALS = import.meta.env.VITE_API_BASIC_AUTH ;
+
+if (!API_URL) {
+  throw new Error('VITE_API_URL is not defined');
+}
+
+if (!API_CREDENTIALS) {
+  console.warn('VITE_API_BASIC_AUTH is not defined — continuing without tunnel credentials');
+}
+
+console.log("API_URL =", API_URL);
+
+
 
 function App() {
   const { user, token, logout } = useAuth();
@@ -64,7 +77,8 @@ function App() {
       const response = await fetch(`${API_URL}/upload-pdf`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: formData,
       })
@@ -95,6 +109,7 @@ function App() {
       const response = await fetch(`${API_URL}/generate-qcm/${fileId}`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: formData,
