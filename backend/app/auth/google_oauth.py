@@ -6,7 +6,8 @@ from fastapi.responses import RedirectResponse
 from httpx_oauth.clients.google import GoogleOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 
-from app.auth import get_user_manager, UserManager
+# Supprimez cette ligne pour éviter l'importation circulaire
+# from app.auth import get_user_manager, UserManager
 from app.database import get_user_db
 from app.models import User
 
@@ -53,12 +54,15 @@ async def google_login():
 @router.get("/google/callback")
 async def google_callback(
     request: Request,
-    user_manager: UserManager = Depends(get_user_manager),
     user_db=Depends(get_user_db),
 ):
     """
     Handle Google OAuth callback
     """
+    # Import ici pour éviter l'importation circulaire
+    from app.auth import get_user_manager
+    user_manager = await get_user_manager(user_db)
+    
     redirect_uri = f"{BACKEND_URL}/auth/callback"
     
     try:
