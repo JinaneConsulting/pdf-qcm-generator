@@ -1,39 +1,17 @@
-import uuid
-from sqlalchemy import Column, String, ForeignKey, Integer
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
-from app.database import Base
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+# app/models.py
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
+from app.base import Base
 
-# Classe pour la création d'un utilisateur
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: Optional[str] = None
-
-class Config:
-    orm_mode = True
-
-# Classe pour la mise à jour d'un utilisateur
-class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-
-class Config:
-    orm_mode = True
+class User(SQLAlchemyBaseUserTable[int], Base):
+    __tablename__ = "user"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    access_tokens: Mapped[list["AccessToken"]] = relationship(back_populates="user")
 
 class AccessToken(Base):
     __tablename__ = "access_tokens"
-
-    id = Column(Integer, primary_key=True, index=True)
-    token = Column(String, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-
-    user = relationship("User", back_populates="tokens")
-
-class User(SQLAlchemyBaseUserTableUUID, Base):
-    tokens = relationship("AccessToken", back_populates="user")
-    full_name = Column(String, nullable=True)
-    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token: Mapped[str] = mapped_column(unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user: Mapped["User"] = relationship(back_populates="access_tokens")
