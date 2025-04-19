@@ -10,15 +10,9 @@ interface LoginFormProps {
   onToggleForm: () => void;
 }
 
-const API_BASE_URL = 'https://pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
-const API_URL = import.meta.env.VITE_API_URL ? 
-  import.meta.env.VITE_API_URL.split('@')[1] : 
-  API_BASE_URL;
-
-const API_CREDENTIALS = import.meta.env.VITE_API_URL ? 
-  import.meta.env.VITE_API_URL.split('@')[0].replace('https://', '') : 
-  'user:f6f93d86265ff53a7a7e0ac885597bf3';
-
+// Remplacer la configuration API par :
+const API_URL = import.meta.env.VITE_API_URL || 'https://pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
+const API_CREDENTIALS = import.meta.env.VITE_API_CREDENTIALS || 'user:f6f93d86265ff53a7a7e0ac885597bf3';
 const BASIC_AUTH = `Basic ${btoa(API_CREDENTIALS)}`;
 
 const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
@@ -33,21 +27,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
 
   const handleGoogleLogin = async () => {
     try {
-      const response = await fetch(`${API_URL}/auth/google/login`, {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization-Tunnel': BASIC_AUTH
-        }
+
+       // Ajout du logging critique
+      console.log('Configuration API:', {
+        API_URL,
+        BASIC_AUTH: BASIC_AUTH.substring(0, 15) + '...' // Masque les credentials
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        window.location.href = data.authorization_url;
-      } else {
-        console.error('Failed to get Google login URL');
-      }
+      // Simplification du processus - redirection directe
+      window.location.href = `${API_URL}/auth/google/login`;
     } catch (error) {
-      console.error('Error initiating Google login:', error);
+      console.error('Erreur complète:', error);
+      alert('Échec de la connexion Google');
     }
   };
 

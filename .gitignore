@@ -38,3 +38,5 @@ test.db
 
 # Ignore le fichier .env
 backend/.env
+
+.env.local

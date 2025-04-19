@@ -1,103 +1,160 @@
+# app/auth/google_oauth.py
 import os
-from typing import Dict, Optional, Tuple
+import secrets
+import string
+import logging
+from fastapi_users import BaseUserManager
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from dotenv import load_dotenv
+load_dotenv()
+from .backend import UserManager, get_user_manager
+from typing import Optional, Tuple
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from httpx_oauth.clients.google import GoogleOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_async_session
+from app.models import User, AccessToken
+from app.schemas import UserCreate
 
-# Supprimez cette ligne pour éviter l'importation circulaire
-# from app.auth import get_user_manager, UserManager
-from app.database import get_user_db
-from app.models import User
+
+
+# Configuration du logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-google_oauth_client = GoogleOAuth2(
-    os.environ.get("GOOGLE_CLIENT_ID", ""),
-    os.environ.get("GOOGLE_CLIENT_SECRET", ""),
-)
+# Variables d'environnement
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-BACKEND_URL = os.environ.get("BACKEND_URL", "https://pdf-qcm-generator-tunnel-ox62185z.devinapps.com")
+def verify_google_env():
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise ValueError("Variables Google OAuth manquantes dans .env !")
+
+# Configuration Google OAuth
+google_oauth_client = GoogleOAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
 
 async def get_oauth_token(
     request: Request,
-    response: Response,
     oauth_client: GoogleOAuth2,
     redirect_uri: str,
-    state: Optional[str] = None,
-) -> Tuple[OAuth2Token, str]:
+) -> Tuple[OAuth2Token, dict]:
     """
-    Get OAuth2 token from Google
+    Obtenir le token OAuth2 et les infos utilisateur de Google
     """
     code = request.query_params.get("code")
     if not code:
-        raise HTTPException(status_code=400, detail="Code not provided")
-    
-    token = await oauth_client.get_access_token(code, redirect_uri)
-    user_info = await oauth_client.get_id_email(token["access_token"])
-    
-    return token, user_info["email"]
-
-@router.get("/google/login")
-async def google_login():
-    """
-    Redirect to Google login page
-    """
-    redirect_uri = f"{BACKEND_URL}/auth/callback"
-    return await google_oauth_client.get_authorization_url(
-        redirect_uri,
-        scope=["email", "profile"],
-    )
-
-@router.get("/google/callback")
-async def google_callback(
-    request: Request,
-    user_db=Depends(get_user_db),
-):
-    """
-    Handle Google OAuth callback
-    """
-    # Import ici pour éviter l'importation circulaire
-    from app.auth import get_user_manager
-    user_manager = await get_user_manager(user_db)
-    
-    redirect_uri = f"{BACKEND_URL}/auth/callback"
+        raise HTTPException(status_code=400, detail="Code non fourni")
     
     try:
-        token, email = await get_oauth_token(
-            request, Response(), google_oauth_client, redirect_uri
+        # Récupération du token d'accès
+        token = await oauth_client.get_access_token(code, redirect_uri)
+        
+        # Récupération des infos utilisateur avec httpx directement
+        async with httpx.AsyncClient() as client:
+            user_info_response = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {token['access_token']}"}
+            )
+            user_info = user_info_response.json()
+
+        return token, user_info
+    except Exception as e:
+        logger.error(f"Erreur lors de l'obtention du token Google: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Erreur d'authentification Google: {str(e)}")
+
+@router.api_route("/login", methods=["GET", "OPTIONS"])
+async def google_login(request: Request):
+    """Gestion des requêtes OPTIONS et GET pour /login"""
+    if request.method == "OPTIONS":
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": FRONTEND_URL,
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Authorization-Tunnel, Content-Type, Authorization",
+                "Access-Control-Allow-Credentials": "true"
+            }
+        )
+    
+    redirect_uri = f"{BACKEND_URL}/auth/google/callback"
+    auth_url = await google_oauth_client.get_authorization_url(
+        redirect_uri,
+        scope=["openid", "email", "profile"],
+    )
+    return RedirectResponse(url=auth_url)
+
+@router.api_route("/callback", methods=["GET", "OPTIONS"])
+async def google_callback(
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)):
+    """Gestion du callback OAuth Google"""
+    if request.method == "OPTIONS":
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": FRONTEND_URL,
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Authorization-Tunnel, Content-Type, Authorization",
+                "Access-Control-Allow-Credentials": "true"
+            }
+        )
+    
+    from app.auth.backend import jwt_backend, get_user_manager
+    from app.database import get_user_db  # Ajoutez cette ligne
+    from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase  # Ajoutez cette ligne
+        
+    try:
+        # Récupération des informations
+        token, user_info = await get_oauth_token(
+            request, google_oauth_client, f"{BACKEND_URL}/auth/google/callback"
         )
         
-        user = await user_db.get_by_email(email)
-        
+        email = user_info["email"]
+        full_name = user_info.get("name")
+        profile_picture = user_info.get("picture")
+
+        user_db_generator = get_user_db(db)
+        user_db = await anext(user_db_generator)
+        user_manager_generator = get_user_manager(user_db)
+        user_manager = await anext(user_manager_generator)
+
+        # Gestion utilisateur
+        user = await user_manager.user_db.get_by_email(email)
+              
         if not user:
-            user_dict = {
-                "email": email,
-                "is_active": True,
-                "is_verified": True,
-                "is_superuser": False,
-            }
-            
-            import secrets
-            import string
-            password = "".join(
-                secrets.choice(string.ascii_letters + string.digits)
-                for _ in range(20)
+            # Création utilisateur
+            user_create = UserCreate(
+                email=email,
+                password=secrets.token_urlsafe(32),
+                is_active=True,
+                is_verified=True,
+                full_name=full_name,
+                profile_picture=profile_picture
             )
-            
-            user = await user_manager.create(
-                user_dict, safe=True, password=password
-            )
-        
-        from app.auth import jwt_backend
-        token_data = {"sub": str(user.id), "email": user.email}
-        access_token = jwt_backend.get_strategy().write_token(token_data)
-        
-        redirect_url = f"{FRONTEND_URL}/auth/callback?token={access_token}"
-        return RedirectResponse(url=redirect_url)
-    
+            user = await user_manager.create(user_create)
+        else:
+            # Mise à jour
+            if full_name: user.full_name = full_name
+            if profile_picture: user.profile_picture = profile_picture
+            await db.commit()
+
+        # Génération JWT
+        strategy = jwt_backend.get_strategy()
+        access_token = await strategy.write_token(user)
+
+        # Redirection
+        return RedirectResponse(
+            url=f"{FRONTEND_URL}/auth/callback?token={access_token}",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+
     except Exception as e:
-        error_redirect = f"{FRONTEND_URL}/auth/error?error={str(e)}"
-        return RedirectResponse(url=error_redirect)
+        logger.error(f"Erreur callback Google: {str(e)}", exc_info=True)
+        return RedirectResponse(f"{FRONTEND_URL}/auth/error?error=oauth_failed")

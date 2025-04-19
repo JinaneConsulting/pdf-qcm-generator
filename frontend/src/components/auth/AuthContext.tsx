@@ -18,6 +18,8 @@ interface User {
   is_active: boolean;
   is_verified: boolean;
   is_superuser: boolean;
+  full_name?: string | null; // Ajoutez cette propriété
+  profile_picture?: string | null; // Ajoutez cette propriété
 }
 
 interface AuthContextType {

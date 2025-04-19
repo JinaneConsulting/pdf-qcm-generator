@@ -1,32 +1,32 @@
 # app/auth/backend.py
+import logging
 import os
-import uuid
 from typing import Optional
-
-from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers
+from fastapi import Depends, Request, HTTPException, status
+from fastapi_users import BaseUserManager, FastAPIUsers, schemas
 from fastapi_users.manager import IntegerIDMixin 
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase
-
+from fastapi_users.exceptions import UserAlreadyExists
 from app.database import get_user_db
 from app.models import User, AccessToken
 from app.schemas import UserRead, UserCreate, UserUpdate
 from app.email_utils import send_verification_email
 
+
+
+# Logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 SECRET = os.environ.get("JWT_SECRET", "SECRET_KEY_FOR_JWT_PLEASE_CHANGE")
 SECRET_RESET = os.environ.get("SECRET_RESET", "SECRET_KEY_FOR_RESET_PLEASE_CHANGE")
 
-# Configure transport and JWT strategy
+# Configuration JWT
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(
-        secret=SECRET, 
-        lifetime_seconds=3600,
-        user_id_type=int  # <-- Ajouter ce paramètre
-    )
+    return JWTStrategy(SECRET, lifetime_seconds=3600) 
 
 jwt_backend = AuthenticationBackend(
     name="jwt",
@@ -34,20 +34,48 @@ jwt_backend = AuthenticationBackend(
     get_strategy=get_jwt_strategy,
 )
 
-## app/auth/backend.py
-# ... (autres imports conservés)
-
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):  
     reset_password_token_secret = SECRET_RESET
     verification_token_secret = SECRET_RESET
 
+    async def create(self, user_create: schemas.UC, safe: bool = False, request: Optional[Request] = None) -> User:
+        try:
+            # Vérification existence email
+            existing_user = await self.user_db.get_by_email(user_create.email)
+            @property
+            def user_db(self):
+                return self._user_db
+            
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email déjà utilisé"
+                )
+            
+            
+            # Validation supplémentaire
+            if len(user_create.password) < 8:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Le mot de passe doit contenir au moins 8 caractères"
+                )
+                
+            return await super().create(user_create, safe, request)
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Erreur création utilisateur: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Erreur lors de la création du compte"
+            )
+        
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")
-        # Solution 1 (recommandée): Utilisez request_verify
-        await self.request_verify(user, request)
-        
-        # OU Solution 2: Si send_verification_email gère déjà le token
-        # send_verification_email(user.email)
+         # Ne pas envoyer de vérification si l'utilisateur est déjà vérifié
+        if not user.is_verified:
+            await self.request_verify(user, request)
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
@@ -62,13 +90,5 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
 
-async def on_after_register(self, user: User, request: Optional[Request] = None):
-    print(f"User {user.id} has registered.")
-    # Utilisez la méthode request_verify si vous voulez envoyer un email de vérification
-    await self.request_verify(user, request)
-    # Ou simplement envoyer l'email sans token si votre send_verification_email n'en a pas besoin
-    # send_verification_email(user.email)
-
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [jwt_backend])
-
 current_active_user = fastapi_users.current_user(active=True)

@@ -1,14 +1,12 @@
 import { useState, useRef } from 'react'
 import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, LogOut, FolderPlus, MessageSquarePlus } from 'lucide-react'
 import './App.css'
-
 import { Button } from './components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert'
 import { Input } from './components/ui/input'
 import { RadioGroup, RadioGroupItem } from './components/ui/radio-group'
 import { Label } from './components/ui/label'
 import { Progress } from './components/ui/progress'
-
 import { QCMResponse } from './types'
 import { useAuth } from './components/auth/AuthContext'
 import AuthPage from './components/auth/AuthPage'
@@ -169,6 +167,7 @@ function App() {
   if (!token || !user) {
     return <AuthPage />;
   }
+  
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
