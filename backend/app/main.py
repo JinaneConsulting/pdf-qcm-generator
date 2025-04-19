@@ -69,5 +69,10 @@ app.include_router(
     tags=["users"],
 )
 
+@app.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Déconnecté avec succès"}
+
 from app.auth.google_oauth import verify_google_env
 verify_google_env() 

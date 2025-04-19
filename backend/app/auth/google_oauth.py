@@ -19,8 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 from app.models import User, AccessToken
 from app.schemas import UserCreate
-
-
+from secrets import token_urlsafe
 
 # Configuration du logging
 logger = logging.getLogger(__name__)
@@ -82,13 +81,22 @@ async def google_login(request: Request):
                 "Access-Control-Allow-Credentials": "true"
             }
         )
-    
+
     redirect_uri = f"{BACKEND_URL}/auth/google/callback"
+    
+    # 1. Générer l'URL de base
     auth_url = await google_oauth_client.get_authorization_url(
         redirect_uri,
-        scope=["openid", "email", "profile"],
+        scope=["openid", "email", "profile"]
     )
+    
+    # 2. Ajouter les paramètres
+    auth_url += "&prompt=select_account"
+    state = token_urlsafe(16)
+    auth_url += f"&state={state}"
+    
     return RedirectResponse(url=auth_url)
+    
 
 @router.api_route("/callback", methods=["GET", "OPTIONS"])
 async def google_callback(
@@ -151,9 +159,12 @@ async def google_callback(
 
         # Redirection
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/auth/callback?token={access_token}",
-            headers={"Authorization": f"Bearer {access_token}"}
-        )
+        url=f"{FRONTEND_URL}/auth/callback?token={access_token}",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Set-Cookie": f"auth_token={access_token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax"  # Durée de vie limitée
+        }
+    )
 
     except Exception as e:
         logger.error(f"Erreur callback Google: {str(e)}", exc_info=True)
