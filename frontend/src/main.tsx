@@ -7,7 +7,7 @@ import { AuthProvider } from './components/auth/AuthContext'
 import GoogleAuthCallback from './components/auth/GoogleAuthCallback'
 import AuthCallback from './components/auth/AuthCallback'
 import OAuthErrorPage from './components/auth/OAuthErrorPage'
-import ProfilePage from './components/user/ProfilePage' // Ajoutez cette ligne
+import ProfilePage from './components/user/ProfilePage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
