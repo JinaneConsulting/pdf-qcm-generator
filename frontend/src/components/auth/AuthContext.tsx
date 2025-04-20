@@ -45,21 +45,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUser = async () => {
       if (!token) return;
-
+    
       try {
         setIsLoading(true);
-        const response = await fetch(`${API_URL}/users/me`, {
+        const response = await fetch(`${API_URL}/custom/me`, {  // Nouvelle route
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Authorization-Tunnel': BASIC_AUTH
           }
         });
-
+    
         if (!response.ok) {
           throw new Error('Session expirée, veuillez vous reconnecter');
         }
-
+    
         const userData = await response.json();
         setUser(userData);
       } catch (error) {
@@ -70,7 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
       }
     };
-
     fetchUser();
   }, [token]);
 

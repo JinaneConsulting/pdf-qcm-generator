@@ -8,10 +8,12 @@ from fastapi_users.manager import IntegerIDMixin
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from fastapi_users.exceptions import UserAlreadyExists
+from sqlalchemy import select
 from app.database import get_user_db
 from app.models import User, AccessToken
 from app.schemas import UserRead, UserCreate, UserUpdate
 from app.email_utils import send_verification_email
+from app.security.encryption import encrypt_data
 
 
 
@@ -38,28 +40,34 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = SECRET_RESET
     verification_token_secret = SECRET_RESET
 
+    async def get_by_email(self, email: str) -> Optional[User]:
+        encrypted_email = encrypt_data(email)
+        return await self.user_db.get_by_email(encrypted_email)
+
     async def create(self, user_create: schemas.UC, safe: bool = False, request: Optional[Request] = None) -> User:
         try:
             # Vérification existence email
-            existing_user = await self.user_db.get_by_email(user_create.email)
-            @property
-            def user_db(self):
-                return self._user_db
+            encrypted_email = encrypt_data(user_create.email)
+            existing_user = await self.user_db.session.execute(
+                select(User).where(User._encrypted_email == encrypted_email)
+            )
+            
+            if existing_user.scalars().first():
+                raise UserAlreadyExists()
             
             if existing_user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Email déjà utilisé"
                 )
-            
-            
+                       
             # Validation supplémentaire
             if len(user_create.password) < 8:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Le mot de passe doit contenir au moins 8 caractères"
                 )
-                
+                        
             return await super().create(user_create, safe, request)
             
         except HTTPException:

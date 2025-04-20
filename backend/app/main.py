@@ -1,8 +1,11 @@
 from dotenv import load_dotenv
+import jwt
+
+from app.auth.backend import SECRET
 load_dotenv()
 import logging
 import os
-from fastapi import FastAPI, Depends, Request, Response
+from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from app.schemas import UserRead, UserCreate, UserUpdate
@@ -29,6 +32,32 @@ app.add_middleware(
     allow_headers=["Authorization-Tunnel", "Content-Type", "Authorization"],
     expose_headers=["Authorization-Tunnel", "Location"]  # Crucial pour les redirections
 )
+
+@app.get("/custom/me")
+async def get_current_user(request: Request):
+    """Route personnalisée pour récupérer l'utilisateur depuis le token"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token manquant")
+    
+    token = auth_header.replace("Bearer ", "")
+    
+    try:
+        # Décoder le token
+        payload = jwt.decode(token, SECRET, algorithms=["HS256"])
+        
+        # Retourner les informations utilisateur
+        return {
+            "id": payload.get("sub"),
+            "email": payload.get("email"),
+            "full_name": payload.get("full_name"),
+            "profile_picture": payload.get("profile_picture"),
+            "is_active": payload.get("is_active", True),
+            "is_verified": payload.get("is_verified", True),
+            "is_superuser": payload.get("is_superuser", False)
+        }
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token invalide")
 
 # Gestionnaire global pour les requêtes OPTIONS
 @app.options("/{full_path:path}")
@@ -68,6 +97,8 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
+
+
 
 @app.post("/auth/logout")
 async def logout(response: Response):

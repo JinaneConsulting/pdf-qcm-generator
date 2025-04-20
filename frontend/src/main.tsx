@@ -15,7 +15,7 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <Routes>
           <Route path="/" element={<App />} />
-          <Route path="/profile" element={<ProfilePage />} /> {/* Nouvelle route */}
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/auth/error" element={<OAuthErrorPage />} />

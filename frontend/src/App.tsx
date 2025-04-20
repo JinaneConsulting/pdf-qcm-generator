@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import Sidebar from './components/layout/Sidebar';
+import { useState, useRef, useEffect } from 'react'
 import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, LogOut, FolderPlus, MessageSquarePlus } from 'lucide-react'
 import './App.css'
 import { Button } from './components/ui/button'
@@ -11,8 +12,8 @@ import { QCMResponse } from './types'
 import { useAuth } from './components/auth/AuthContext'
 import AuthPage from './components/auth/AuthPage'
 
-const API_URL = import.meta.env.VITE_API_URL ;
-const API_CREDENTIALS = import.meta.env.VITE_API_BASIC_AUTH ;
+const API_URL = import.meta.env.VITE_API_URL;
+const API_CREDENTIALS = import.meta.env.VITE_API_BASIC_AUTH;
 
 if (!API_URL) {
   throw new Error('VITE_API_URL is not defined');
@@ -23,8 +24,6 @@ if (!API_CREDENTIALS) {
 }
 
 console.log("API_URL =", API_URL);
-
-
 
 function App() {
   const { user, token, logout } = useAuth();
@@ -38,6 +37,33 @@ function App() {
   const [view, setView] = useState<'home' | 'quiz'>('home')
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
   const [showResults, setShowResults] = useState(false)
+  
+  // Ajout de l'état pour suivre si la sidebar est repliée
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+
+  // Observer pour détecter l'état de la sidebar
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
+          if (sidebarElement) {
+            const isCollapsed = sidebarElement.className.includes('w-16');
+            setIsSidebarCollapsed(isCollapsed);
+          }
+        }
+      });
+    });
+
+    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
+    if (sidebarElement) {
+      observer.observe(sidebarElement, { attributes: true });
+      // État initial
+      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
+    }
+
+    return () => observer.disconnect();
+  }, []);
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -57,6 +83,7 @@ function App() {
       setShowResults(false)
       setUserAnswers({})
     }
+    
   }
 
   const handleUpload = async () => {
@@ -168,91 +195,122 @@ function App() {
     return <AuthPage />;
   }
   
-
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Sidebar */}
-      <div className="w-72 bg-black text-white flex flex-col">
-        {/* Logo with User Name */}
-        <div className="p-4 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-            <span className="text-white font-bold">Q</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-semibold">PDF QCM</span>
-            <span className="text-sm text-purple-400 font-medium">
-              Bonjour, {user.email.split('@')[0]}
-            </span>
-          </div>
-        </div>
-
-        {/* User info */}
-        <div className="p-4 border-b border-zinc-800">
-          <div className="bg-zinc-800 p-3 rounded-md">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
-                {user.email.charAt(0).toUpperCase()}
-              </div>
-              <div className="truncate">
-                <div className="text-sm font-medium truncate">{user.email}</div>
-              </div>
+      {/* Sidebar avec photo de profil */}
+      <Sidebar>
+        <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+          {/* Logo with User Name */}
+          <div className="p-4 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
+              <span className="text-white font-bold">Q</span>
             </div>
+            {!isSidebarCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-xl font-semibold whitespace-nowrap">PDF QCM</span>
+                <span className="text-sm text-purple-400 font-medium whitespace-nowrap">
+                  Bonjour, {user.email.split('@')[0]}
+                </span>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* PDF Info - Only shown when a PDF is uploaded */}
-        {file && fileId && (
+          {/* User info avec email seulement */}
           <div className="p-4 border-b border-zinc-800">
             <div className="bg-zinc-800 p-3 rounded-md">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-10 bg-red-500 rounded flex items-center justify-center text-white text-xs">PDF</div>
                 <div className="truncate">
-                  <div className="text-sm font-medium truncate">{file.name}</div>
-                  <div className="text-xs text-gray-400">{Math.round(file.size / 1024)} KB</div>
+                  {!isSidebarCollapsed && (
+                    <div className="text-sm font-medium truncate">{user.email}</div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Navigation */}
-        <div className="flex-1 p-4 flex flex-col gap-3">
-          <button 
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-            onClick={resetQuiz}
-          >
-            <Plus size={18} />
-            <span>Nouveau QCM</span>
-          </button>
-          
-          <button 
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-            onClick={() => alert('Fonctionnalité en développement')}
-          >
-            <FolderPlus size={18} />
-            <span>Nouveau dossier</span>
-          </button>
-          
-          <button 
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-            onClick={() => alert('Fonctionnalité en développement')}
-          >
-            <MessageSquarePlus size={18} />
-            <span>Nouveau chat</span>
-          </button>
-        </div>
+          {/* PDF Info - Only shown when a PDF is uploaded */}
+          {file && fileId && (
+            <div className="p-4 border-b border-zinc-800">
+              <div className="bg-zinc-800 p-3 rounded-md">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-10 bg-red-500 rounded flex items-center justify-center text-white text-xs">PDF</div>
+                  {!isSidebarCollapsed && (
+                    <div className="truncate">
+                      <div className="text-sm font-medium truncate">{file.name}</div>
+                      <div className="text-xs text-gray-400">{Math.round(file.size / 1024)} KB</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
-        {/* Bottom actions */}
-        <div className="p-4 border-t border-zinc-800">
-          <div 
-            className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-            onClick={logout}
-          >
-            <LogOut size={18} />
-            <span>Déconnexion</span>
+          {/* Navigation */}
+          <div className="flex-1 p-4 flex flex-col gap-3">
+            <button 
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              onClick={resetQuiz}
+            >
+              <Plus size={18} />
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Nouveau QCM</span>
+              )}
+            </button>
+            
+            <button 
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              onClick={() => alert('Fonctionnalité en développement')}
+            >
+              <FolderPlus size={18} />
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Nouveau dossier</span>
+              )}
+            </button>
+            
+            <button 
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              onClick={() => alert('Fonctionnalité en développement')}
+            >
+              <MessageSquarePlus size={18} />
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Nouveau chat</span>
+              )}
+            </button>
+          </div>
+
+          {/* Bottom actions avec photo de profil au-dessus de la déconnexion */}
+          <div className="p-4 border-t border-zinc-800">
+            {/* Photo de profil */}
+            <div className="mb-4 flex justify-center">
+              {user.profile_picture ? (
+                <img 
+                  src={user.profile_picture} 
+                  alt="Photo de profil" 
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-purple-600"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0 overflow-hidden">
+                  {/* Avatar non genré - icône utilisateur neutre */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+                    <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* Bouton de déconnexion */}
+            <div 
+              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
+              onClick={logout}
+            >
+              <LogOut size={18} />
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Déconnexion</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </Sidebar>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">

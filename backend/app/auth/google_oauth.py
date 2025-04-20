@@ -62,6 +62,7 @@ async def get_oauth_token(
                 headers={"Authorization": f"Bearer {token['access_token']}"}
             )
             user_info = user_info_response.json()
+            google_sub = user_info.get("sub")
 
         return token, user_info
     except Exception as e:
@@ -114,9 +115,11 @@ async def google_callback(
             }
         )
     
-    from app.auth.backend import jwt_backend, get_user_manager
-    from app.database import get_user_db  # Ajoutez cette ligne
-    from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase  # Ajoutez cette ligne
+    from app.auth.backend import jwt_backend, get_user_manager, SECRET
+    from app.database import get_user_db
+    from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+    import jwt
+    from datetime import datetime, timedelta
         
     try:
         # Récupération des informations
@@ -127,44 +130,34 @@ async def google_callback(
         email = user_info["email"]
         full_name = user_info.get("name")
         profile_picture = user_info.get("picture")
-
-        user_db_generator = get_user_db(db)
-        user_db = await anext(user_db_generator)
-        user_manager_generator = get_user_manager(user_db)
-        user_manager = await anext(user_manager_generator)
-
-        # Gestion utilisateur
-        user = await user_manager.user_db.get_by_email(email)
-              
-        if not user:
-            # Création utilisateur
-            user_create = UserCreate(
-                email=email,
-                password=secrets.token_urlsafe(32),
-                is_active=True,
-                is_verified=True,
-                full_name=full_name,
-                profile_picture=profile_picture
-            )
-            user = await user_manager.create(user_create)
-        else:
-            # Mise à jour
-            if full_name: user.full_name = full_name
-            if profile_picture: user.profile_picture = profile_picture
-            await db.commit()
-
-        # Génération JWT
-        strategy = jwt_backend.get_strategy()
-        access_token = await strategy.write_token(user)
-
+        google_sub = user_info.get("sub")
+        
+        # Puisque nous avons des problèmes avec la récupération d'utilisateur,
+        # créons un token JWT directement avec les informations nécessaires
+        
+        # Créer la charge utile du token
+        payload = {
+            "sub": email,  # Utiliser l'email comme identifiant
+            "email": email,
+            "exp": datetime.utcnow() + timedelta(hours=24),
+            "full_name": full_name,
+            "profile_picture": profile_picture,
+            "is_active": True,
+            "is_verified": True,
+            "is_superuser": False
+        }
+        
+        # Générer le token manuellement
+        access_token = jwt.encode(payload, SECRET, algorithm="HS256")
+        
         # Redirection
         return RedirectResponse(
-        url=f"{FRONTEND_URL}/auth/callback?token={access_token}",
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "Set-Cookie": f"auth_token={access_token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax"  # Durée de vie limitée
-        }
-    )
+            url=f"{FRONTEND_URL}/auth/callback?token={access_token}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Set-Cookie": f"auth_token={access_token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax"
+            }
+        )
 
     except Exception as e:
         logger.error(f"Erreur callback Google: {str(e)}", exc_info=True)

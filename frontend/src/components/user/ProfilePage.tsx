@@ -1,11 +1,37 @@
 // src/components/user/ProfilePage.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '../ui/button';
+import Sidebar from '../layout/Sidebar';
 import { LogOut, User as UserIcon } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+
+  // Observer pour détecter l'état de la sidebar
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
+          if (sidebarElement) {
+            const isCollapsed = sidebarElement.className.includes('w-16');
+            setIsSidebarCollapsed(isCollapsed);
+          }
+        }
+      });
+    });
+
+    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
+    if (sidebarElement) {
+      observer.observe(sidebarElement, { attributes: true });
+      // État initial
+      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   if (!user) {
     return (
@@ -20,49 +46,90 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Sidebar */}
-      <div className="w-72 bg-black text-white flex flex-col">
-        {/* Logo */}
-        <div className="p-4 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-            <span className="text-white font-bold">Q</span>
+      {/* Sidebar avec le composant réutilisable */}
+      <Sidebar>
+        <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+          {/* Logo */}
+          <div className="p-4 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
+              <span className="text-white font-bold">Q</span>
+            </div>
+            {!isSidebarCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-xl font-semibold whitespace-nowrap">PDF QCM</span>
+                <span className="text-sm text-purple-400 font-medium whitespace-nowrap">
+                  Bonjour, {user.email.split('@')[0]}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-semibold">PDF QCM</span>
-            <span className="text-sm text-purple-400 font-medium">
-              Bonjour, {user.email.split('@')[0]}
-            </span>
-          </div>
-        </div>
 
-        {/* Navigation */}
-        <div className="flex-1 p-4 flex flex-col gap-3">
-          <button 
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-            onClick={() => window.location.href = '/'}
-          >
-            <span>Tableau de bord</span>
-          </button>
-          
-          <button 
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-          >
-            <UserIcon size={18} />
-            <span>Mon profil</span>
-          </button>
-        </div>
+          {/* Info utilisateur */}
+          <div className="p-4 border-b border-zinc-800">
+            <div className="bg-zinc-800 p-3 rounded-md">
+              <div className="flex items-center gap-2">
+                {!isSidebarCollapsed && (
+                  <div className="truncate">
+                    <div className="text-sm font-medium truncate">{user.email}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
-        {/* Bottom actions */}
-        <div className="p-4 border-t border-zinc-800">
-          <div 
-            className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-            onClick={logout}
-          >
-            <LogOut size={18} />
-            <span>Déconnexion</span>
+          {/* Navigation */}
+          <div className="flex-1 p-4 flex flex-col gap-3">
+            <button 
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              onClick={() => window.location.href = '/'}
+            >
+              <span className="inline-block w-5 h-5 flex-shrink-0">⌂</span> {/* Icône de maison */}
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Tableau de bord</span>
+              )}
+            </button>
+            
+            <button 
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+            >
+              <UserIcon size={18} />
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Mon profil</span>
+              )}
+            </button>
+          </div>
+
+          {/* Bottom actions avec photo de profil au-dessus de déconnexion */}
+          <div className="p-4 border-t border-zinc-800">
+            {/* Photo de profil */}
+            <div className="mb-4 flex justify-center">
+              {user.profile_picture ? (
+                <img 
+                  src={user.profile_picture} 
+                  alt="Photo de profil" 
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-purple-600"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0 overflow-hidden">
+                  {/* Avatar neutre/non genré */}
+                  <UserIcon size={28} />
+                </div>
+              )}
+            </div>
+            
+            {/* Bouton de déconnexion */}
+            <div 
+              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
+              onClick={logout}
+            >
+              <LogOut size={18} />
+              {!isSidebarCollapsed && (
+                <span className="whitespace-nowrap">Déconnexion</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </Sidebar>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-8">
@@ -78,8 +145,8 @@ const ProfilePage: React.FC = () => {
                   className="w-20 h-20 rounded-full mr-4 object-cover"
                 />
               ) : (
-                <div className="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center text-white text-2xl mr-4">
-                  {user.full_name ? user.full_name.charAt(0) : user.email.charAt(0).toUpperCase()}
+                <div className="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center text-white mr-4 overflow-hidden">
+                  <UserIcon size={48} />
                 </div>
               )}
               <div>
