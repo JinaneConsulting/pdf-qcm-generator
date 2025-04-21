@@ -8,11 +8,16 @@
       "path": "./tsconfig.node.json"
     }
   ],
-  "compilerOptions": {
+ "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": [
+      "vitest/globals",
+      "@testing-library/jest-dom",
+      "node"
+    ]
   }
 }
 
