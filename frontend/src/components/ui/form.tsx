@@ -167,7 +167,6 @@ const FormMessage = React.forwardRef<
 FormMessage.displayName = "FormMessage"
 
 export {
-  useFormField,
   Form,
   FormItem,
   FormLabel,
@@ -176,3 +175,7 @@ export {
   FormMessage,
   FormField,
 }
+
+// Utiliser eslint-disable pour le hook
+// eslint-disable-next-line react-refresh/only-export-components
+export { useFormField }

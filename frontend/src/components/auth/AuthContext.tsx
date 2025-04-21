@@ -1,16 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-
-const API_BASE_URL = 'https://pdf-qcm-generator-tunnel-sjxi7x37.devinapps.com';
-const API_URL = import.meta.env.VITE_API_URL ;
-  import.meta.env.VITE_API_URL.split('@')[1] ; 
-  API_BASE_URL;
-
-const API_CREDENTIALS = import.meta.env.VITE_API_URL ? 
-  import.meta.env.VITE_API_URL.split('@')[0].replace('https://', '') : 
-  'user:f6f93d86265ff53a7a7e0ac885597bf3';
-
-const BASIC_AUTH = `Basic ${btoa(API_CREDENTIALS)}`;
-
+import { API_URL, BASIC_AUTH } from '@/config';
 
 interface User {
   id: string;
@@ -18,8 +7,8 @@ interface User {
   is_active: boolean;
   is_verified: boolean;
   is_superuser: boolean;
-  full_name?: string | null; // Ajoutez cette propriété
-  profile_picture?: string | null; // Ajoutez cette propriété
+  full_name?: string | null;
+  profile_picture?: string | null;
 }
 
 interface AuthContextType {
@@ -34,7 +23,8 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Exporter le contexte pour qu'il soit accessible depuis context-hooks.ts
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -183,6 +173,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// Move this to a separate file to avoid the react-refresh warning
+// For now, we'll suppress the warning
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

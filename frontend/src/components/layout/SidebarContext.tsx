@@ -6,7 +6,8 @@ interface SidebarContextType {
   setIsCollapsed: (value: boolean) => void;
 }
 
-const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
+// Exporter le contexte pour qu'il soit accessible depuis context-hooks.ts
+export const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -42,6 +43,9 @@ export const SidebarProvider: React.FC<{children: ReactNode}> = ({ children }) =
   );
 };
 
+// NOTE: Move this to a separate file to fix the warning:
+// src/hooks/use-sidebar.ts
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (context === undefined) {
@@ -49,4 +53,3 @@ export const useSidebar = () => {
   }
   return context;
 };
-

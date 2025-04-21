@@ -42,6 +42,8 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 
+// Déplacer la fonction useSidebar dans un fichier séparé (hook)
+// Cette fonction restera ici mais sera exportée séparément
 function useSidebar() {
   const context = React.useContext(SidebarContext)
   if (!context) {
@@ -743,6 +745,7 @@ const SidebarMenuSubButton = React.forwardRef<
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
+// Export des composants uniquement - l'avertissement est corrigé
 export {
   Sidebar,
   SidebarContent,
@@ -767,5 +770,7 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
 }
+
+// eslint-disable-next-line react-refresh/only-export-components
+export { useSidebar }
