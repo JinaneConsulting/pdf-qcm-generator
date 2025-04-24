@@ -16,8 +16,8 @@ const AuthCallback: React.FC = () => {
       localStorage.setItem('token', token);
       // Update auth context
       setToken(token);
-      // Redirect to profile page instead of dashboard
-      navigate('/profile');
+      // Redirect to home page (PDF upload) instead of profile page
+      navigate('/');
     } else {
       // Handle error
       navigate('/login?error=Authentication failed');

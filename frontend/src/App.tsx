@@ -191,6 +191,9 @@ function App() {
     return correctAnswers
   }
 
+  // Si pas de token ou d'utilisateur, montrer la page d'authentification
+  // Après l'authentification, l'utilisateur sera automatiquement redirigé vers la page de téléchargement des PDF
+  // car c'est le comportement par défaut (view = 'home')
   if (!token || !user) {
     return <AuthPage />;
   }
@@ -320,39 +323,23 @@ function App() {
             {/* Main Heading */}
             <div className="text-center mb-6">
               <h1 className="text-5xl font-bold mb-4">
-                Générez des <span className="bg-purple-600 text-white px-2 py-1 rounded">QCM</span> à partir de PDF
+                Générez des <span className="bg-purple-600 text-white px-2 py-1 rounded">QCM</span> à partir de votre PDF
               </h1>
-              <p className="text-lg text-gray-700">
-                Créez facilement des questionnaires à choix multiples à partir de vos documents PDF
-              </p>
+        
             </div>
 
             {/* Upload Area */}
             <div className="relative mt-12 mb-16">
               {/* Handwritten note */}
               <div className="absolute -top-12 right-16 text-purple-700 font-handwriting transform rotate-[-5deg]">
-                <div>GLISSEZ-DÉPOSEZ</div>
-                <div>VOTRE PDF ICI</div>
+                
                 <svg
                   className="w-16 h-16 ml-8 transform rotate-[30deg]"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path
-                    d="M12 22L3 15L7 13L12 16L17 13L21 15L12 22Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M12 16L12 2"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                
                 </svg>
               </div>
 

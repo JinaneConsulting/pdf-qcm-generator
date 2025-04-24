@@ -38,7 +38,7 @@ const GoogleAuthCallback: React.FC = () => {
         const data = await response.json();
         localStorage.setItem('token', data.access_token);
         setToken(data.access_token);
-        navigate('/profile'); // Changé de '/' à '/profile'
+        navigate('/'); // Rediriger vers la page principale (téléchargement PDF) au lieu de '/profile'
       } catch (error) {
         console.error('Google auth callback error:', error);
         navigate('/login', { state: { error: (error as Error).message } });
