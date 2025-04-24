@@ -1,7 +1,7 @@
 // src/components/auth/AuthPage.tsx
 import React, { useState, useEffect } from 'react';
-import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
+import PasswordLoginForm from './PasswordLoginForm';
+import PasswordRegisterForm from './PasswordRegisterForm';
 import Sidebar from '../layout/Sidebar';
 import { UserRound, FileTextIcon } from 'lucide-react';
 
@@ -36,6 +36,13 @@ const AuthPage: React.FC = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  // Sélection du composant de formulaire approprié
+  const renderForm = () => {
+    return isLogin ? 
+      <PasswordLoginForm onToggleForm={toggleForm} /> : 
+      <PasswordRegisterForm onToggleForm={toggleForm} />;
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
@@ -90,11 +97,7 @@ const AuthPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-8">
-        {isLogin ? (
-          <LoginForm onToggleForm={toggleForm} />
-        ) : (
-          <RegisterForm onToggleForm={toggleForm} />
-        )}
+        {renderForm()}
       </div>
     </div>
   );

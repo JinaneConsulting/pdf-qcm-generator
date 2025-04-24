@@ -67,8 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       setError(null);
-
-      const response = await fetch(`${API_URL}/auth/jwt/login`, {
+  
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           password: password,
         }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Identifiants invalides');
@@ -90,20 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', data.access_token);
       setToken(data.access_token);
 
-      const userResponse = await fetch(`${API_URL}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${data.access_token}`,
-          'Accept': 'application/json',
-          'Authorization-Tunnel': BASIC_AUTH
-        }
-      });
-
-      if (!userResponse.ok) {
-        throw new Error('Erreur lors de la récupération des données utilisateur');
-      }
-
-      const userData = await userResponse.json();
-      setUser(userData);
+      // Nous n'avons pas besoin de charger l'utilisateur ici car le useEffect se déclenchera
+      // automatiquement quand setToken est appelé
     } catch (error) {
       console.error('Login error:', error);
       setError((error as Error).message);
@@ -116,26 +104,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       setError(null);
-
+  
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded', // Modifié pour être cohérent
           'Accept': 'application/json',
           'Authorization-Tunnel': BASIC_AUTH
         },
-        body: JSON.stringify({
+        body: new URLSearchParams({ // Modifié pour utiliser URLSearchParams au lieu de JSON
           email,
           password,
         }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Erreur lors de l\'inscription');
       }
 
-      await login(email, password);
+      const data = await response.json();
+      localStorage.setItem('token', data.access_token);
+      setToken(data.access_token);
+
+      // Nous n'avons pas besoin de charger l'utilisateur ici car le useEffect se déclenchera
+      // automatiquement quand setToken est appelé
     } catch (error) {
       console.error('Registration error:', error);
       setError((error as Error).message);

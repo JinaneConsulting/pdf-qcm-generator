@@ -8,18 +8,45 @@ from email.mime.multipart import MIMEMultipart
 # Configuration du logging
 logger = logging.getLogger(__name__)
 
-def send_verification_email(email: str, token: str):
+# Récupérer les variables d'environnement
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 25))
+SMTP_TLS = os.getenv("SMTP_TLS", "false").lower() == "true"
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_FROM = os.getenv("SMTP_FROM", "no-reply@tondomaine.com")
+
+def send_email(to_email: str, subject: str, html_content: str) -> bool:
+    """
+    Fonction générique pour envoyer un email
+    """
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = SMTP_FROM
+    msg["To"] = to_email
+
+    part = MIMEText(html_content, "html")
+    msg.attach(part)
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_TLS:
+                server.starttls()
+            if SMTP_USER and SMTP_PASSWORD:
+                server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(msg["From"], [to_email], msg.as_string())
+            logger.info(f"Email envoyé à {to_email}")
+            return True
+    except Exception as e:
+        logger.error(f"Erreur d'envoi d'e-mail SMTP : {e}")
+        return False
+
+def send_verification_email(email: str, token: str) -> bool:
     """
     Envoie un email de vérification avec un token
     """
-    # Utiliser l'URL frontend pour la vérification
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    verification_link = f"{frontend_url}/auth/verify?token={token}"
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Vérification de votre compte"
-    msg["From"] = os.getenv("SMTP_FROM", "no-reply@tondomaine.com")
-    msg["To"] = email
+    verification_link = f"{FRONTEND_URL}/auth/verify?token={token}"
 
     html = f"""
     <html>
@@ -33,58 +60,25 @@ def send_verification_email(email: str, token: str):
     </html>
     """
 
-    part = MIMEText(html, "html")
-    msg.attach(part)
+    return send_email(email, "Vérification de votre compte", html)
 
-    try:
-        with smtplib.SMTP(os.getenv("SMTP_HOST", "localhost"), int(os.getenv("SMTP_PORT", 25))) as server:
-            if os.getenv("SMTP_TLS", "false").lower() == "true":
-                server.starttls()
-            if os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"):
-                server.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASSWORD"))
-            server.sendmail(msg["From"], [email], msg.as_string())
-            logger.info(f"Email de vérification envoyé à {email}")
-            return True
-    except Exception as e:
-        logger.error(f"Erreur d'envoi d'e-mail SMTP : {e}")
-        return False
-
-def send_password_reset_email(email: str, token: str):
+def send_reset_password_email(email: str, token: str) -> bool:
     """
-    Envoie un email de réinitialisation de mot de passe
+    Envoie un email de réinitialisation de mot de passe avec un token
     """
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    reset_link = f"{frontend_url}/auth/reset-password?token={token}"
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Réinitialisation de votre mot de passe"
-    msg["From"] = os.getenv("SMTP_FROM", "no-reply@tondomaine.com")
-    msg["To"] = email
+    reset_link = f"{FRONTEND_URL}/auth/reset-password?token={token}"
 
     html = f"""
     <html>
       <body>
         <p>Bonjour,<br>
-           Vous avez demandé une réinitialisation de votre mot de passe. Veuillez cliquer sur le lien ci-dessous :<br>
+           Vous avez demandé la réinitialisation de votre mot de passe. Veuillez cliquer sur le lien ci-dessous pour créer un nouveau mot de passe :<br>
            <a href="{reset_link}">Réinitialiser mon mot de passe</a><br>
+           Ce lien est valable pendant 24 heures.<br>
            Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.
         </p>
       </body>
     </html>
     """
 
-    part = MIMEText(html, "html")
-    msg.attach(part)
-
-    try:
-        with smtplib.SMTP(os.getenv("SMTP_HOST", "localhost"), int(os.getenv("SMTP_PORT", 25))) as server:
-            if os.getenv("SMTP_TLS", "false").lower() == "true":
-                server.starttls()
-            if os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"):
-                server.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASSWORD"))
-            server.sendmail(msg["From"], [email], msg.as_string())
-            logger.info(f"Email de réinitialisation envoyé à {email}")
-            return True
-    except Exception as e:
-        logger.error(f"Erreur d'envoi d'e-mail SMTP : {e}")
-        return False
+    return send_email(email, "Réinitialisation de votre mot de passe", html)

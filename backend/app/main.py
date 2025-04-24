@@ -1,84 +1,68 @@
 from dotenv import load_dotenv
-import jwt
-
-from app.auth.backend import SECRET
 load_dotenv()
 import logging
 import os
-from fastapi import FastAPI, Depends, HTTPException, Request, Response
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from app.schemas import UserRead, UserCreate, UserUpdate
-from app.auth import fastapi_users, current_active_user, router as auth_router
+from app.database import create_db_and_tables, get_async_session
+from app.auth import router as auth_router
+from app.auth import get_current_user
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-
+# Configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+# Application FastAPI
 app = FastAPI()
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True, log_level="trace")
+    uvicorn.run("main:app", reload=True, log_level="debug")
 
-# Middleware CORS DOIT ÊTRE PLACÉ EN PREMIER
+# Middleware CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["OPTIONS", "GET", "POST"],
     allow_headers=["Authorization-Tunnel", "Content-Type", "Authorization"],
-    expose_headers=["Authorization-Tunnel", "Location"]  # Crucial pour les redirections
+    expose_headers=["Authorization-Tunnel", "Location"]
 )
 
+# Route pour obtenir les informations de l'utilisateur actuel
 @app.get("/custom/me")
-async def get_current_user(request: Request):
-    """Route personnalisée pour récupérer l'utilisateur depuis le token"""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token manquant")
+async def get_current_user_info(
+    request: Request,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Récupération de l'utilisateur courant via le token JWT"""
+    user, error = await get_current_user(request, session)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=error,
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     
-    token = auth_header.replace("Bearer ", "")
-    
-    try:
-        # Décoder le token
-        payload = jwt.decode(token, SECRET, algorithms=["HS256"])
-        
-        # Retourner les informations utilisateur
-        return {
-            "id": payload.get("sub"),
-            "email": payload.get("email"),
-            "full_name": payload.get("full_name"),
-            "profile_picture": payload.get("profile_picture"),
-            "is_active": payload.get("is_active", True),
-            "is_verified": payload.get("is_verified", True),
-            "is_superuser": payload.get("is_superuser", False)
-        }
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token invalide")
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "profile_picture": user.profile_picture,
+        "is_active": user.is_active,
+        "is_verified": user.is_verified,
+        "is_superuser": user.is_superuser
+    }
 
-# Gestionnaire global pour les requêtes OPTIONS
-@app.options("/{full_path:path}")
-async def options_handler(request: Request, full_path: str):
-    logger.debug(f"Gestionnaire OPTIONS global appelé pour: {full_path}")
-    return Response(
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": FRONTEND_URL,
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Authorization-Tunnel, Content-Type, Authorization",
-            "Access-Control-Allow-Credentials": "true"
-        }
-    )
-
-# Ensuite seulement les routes
+# Inclure les routes d'authentification
 app.include_router(auth_router)
 
 @app.on_event("startup")
 async def startup_event():
-    from app.database import create_db_and_tables
     await create_db_and_tables()
     logger.info("Application started and ready to receive requests.")
 
@@ -88,22 +72,13 @@ def root():
     return {"message": "Welcome to PDF QCM Generator API"}
 
 @app.get("/protected-route")
-async def protected_route(user=Depends(current_active_user)):
+async def protected_route(
+    request: Request,
+    session: AsyncSession = Depends(get_async_session)
+):
+    user, error = await get_current_user(request, session)
+    if error:
+        raise HTTPException(status_code=401, detail=error)
+    
     logger.debug(f"Access to protected route by {user.email}")
     return {"message": f"Welcome {user.email}!"}
-
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix="/users",
-    tags=["users"],
-)
-
-
-
-@app.post("/auth/logout")
-async def logout(response: Response):
-    response.delete_cookie("access_token")
-    return {"message": "Déconnecté avec succès"}
-
-from app.auth.google_oauth import verify_google_env
-verify_google_env() 
