@@ -1,4 +1,4 @@
-# app/models.py
+# app/models/user_model.py
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import DateTime, ForeignKey, String, Boolean, func
@@ -23,7 +23,10 @@ class User(Base):
     
     # Relation avec les tokens d'accès
     access_tokens: Mapped[List["AccessToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-
+    
+    # Relation avec les PDFs (AJOUT)
+    pdfs: Mapped[List["PDF"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    
     def can_login_with_password(self) -> bool:
         """Indique si l'utilisateur peut se connecter avec un mot de passe"""
         return self.hashed_password is not None and len(self.hashed_password) > 0

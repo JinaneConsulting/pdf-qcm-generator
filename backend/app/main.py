@@ -8,6 +8,7 @@ import uvicorn
 from app.database import create_db_and_tables, get_async_session
 from app.auth import router as auth_router
 from app.auth import get_current_user
+from app.pdf import router as pdf_router  # Importer le router PDF
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Logging
@@ -28,7 +29,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[FRONTEND_URL],
     allow_credentials=True,
-    allow_methods=["OPTIONS", "GET", "POST"],
+    allow_methods=["OPTIONS", "GET", "POST", "DELETE", "PUT"],  # Ajout de DELETE et PUT pour les opérations PDF
     allow_headers=["Authorization-Tunnel", "Content-Type", "Authorization"],
     expose_headers=["Authorization-Tunnel", "Location"]
 )
@@ -61,8 +62,15 @@ async def get_current_user_info(
 # Inclure les routes d'authentification
 app.include_router(auth_router)
 
+# Inclure les routes PDF
+app.include_router(pdf_router)
+
 @app.on_event("startup")
 async def startup_event():
+    # Créer le dossier pour les PDFs s'il n'existe pas
+    pdf_upload_dir = os.environ.get("UPLOAD_DIR", "uploads/pdfs")
+    os.makedirs(pdf_upload_dir, exist_ok=True)
+    
     await create_db_and_tables()
     logger.info("Application started and ready to receive requests.")
 

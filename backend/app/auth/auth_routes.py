@@ -169,6 +169,7 @@ async def google_login(response: Response):
     
     return RedirectResponse(url=authorization_url)
 
+# Modification de la route de callback Google
 @router.get("/google/callback")
 async def google_callback(
     request: Request,
@@ -193,13 +194,21 @@ async def google_callback(
     
     # Redirection avec le token
     access_token = result["access_token"]
-    return RedirectResponse(
+    
+    # Log pour le débogage
+    logger.info(f"Redirection vers: {FRONTEND_URL}/auth/callback?token={access_token[:10]}...")
+    
+    # Utiliser une redirection 302 au lieu de 307
+    response = RedirectResponse(
         url=f"{FRONTEND_URL}/auth/callback?token={access_token}",
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "Set-Cookie": f"auth_token={access_token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax"
-        }
+        status_code=302
     )
+    
+    # Ajouter des headers explicites
+    response.headers["Authorization"] = f"Bearer {access_token}"
+    response.headers["Set-Cookie"] = f"auth_token={access_token}; Path=/; Max-Age=86400; SameSite=Lax"
+    
+    return response
 
 @router.post("/logout")
 async def logout(response: Response):

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { API_URL, BASIC_AUTH } from '@/config';
+import { API_URL, BASIC_AUTH } from '../../config';
 
 interface User {
   id: string;
@@ -23,14 +23,39 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-// Exporter le contexte pour qu'il soit accessible depuis context-hooks.ts
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Créer le contexte avec une valeur par défaut undefined
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Hook personnalisé pour utiliser le contexte d'authentification
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Composant Provider qui fournit le contexte d'authentification
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setTokenState] = useState<string | null>(localStorage.getItem('token') || localStorage.getItem('auth_token'));
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fonction pour définir le token et le stocker dans localStorage
+  const setToken = (newToken: string | null) => {
+    console.log("Setting token:", newToken ? newToken.substring(0, 10) + "..." : "null");
+    
+    if (newToken) {
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('auth_token', newToken); // Pour compatibilité
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth_token');
+    }
+    
+    setTokenState(newToken);
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -38,7 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
       try {
         setIsLoading(true);
-        const response = await fetch(`${API_URL}/custom/me`, {  // Nouvelle route
+        console.log("Fetching user with token:", token.substring(0, 10) + "...");
+        
+        const response = await fetch(`${API_URL}/custom/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -47,10 +74,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
     
         if (!response.ok) {
+          console.error("Failed to fetch user:", response.status, response.statusText);
           throw new Error('Session expirée, veuillez vous reconnecter');
         }
     
         const userData = await response.json();
+        console.log("User data fetched successfully:", userData);
         setUser(userData);
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -60,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
       }
     };
+    
     fetchUser();
   }, [token]);
 
@@ -87,11 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.access_token);
       setToken(data.access_token);
-
-      // Nous n'avons pas besoin de charger l'utilisateur ici car le useEffect se déclenchera
-      // automatiquement quand setToken est appelé
     } catch (error) {
       console.error('Login error:', error);
       setError((error as Error).message);
@@ -108,11 +134,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded', // Modifié pour être cohérent
+          'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
           'Authorization-Tunnel': BASIC_AUTH
         },
-        body: new URLSearchParams({ // Modifié pour utiliser URLSearchParams au lieu de JSON
+        body: new URLSearchParams({
           email,
           password,
         }),
@@ -124,11 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.access_token);
       setToken(data.access_token);
-
-      // Nous n'avons pas besoin de charger l'utilisateur ici car le useEffect se déclenchera
-      // automatiquement quand setToken est appelé
     } catch (error) {
       console.error('Registration error:', error);
       setError((error as Error).message);
@@ -138,7 +160,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
     setToken(null);
     setUser(null);
   };
@@ -166,13 +187,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Move this to a separate file to avoid the react-refresh warning
-// For now, we'll suppress the warning
-// eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Exporter le contexte, le hook et le provider
+export { AuthContext, AuthProvider, useAuth };

@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Button } from '../ui/button';
 import Sidebar from '../layout/Sidebar';
 import { LogOut, User as UserIcon } from 'lucide-react';
+import PdfUploader from '@/components/PdfUpLoader';
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -200,6 +201,10 @@ const ProfilePage: React.FC = () => {
                 </p>
               </div>
             </div>
+            <div className="mt-8">
+  <h2 className="text-2xl font-bold mb-4">Télécharger un PDF</h2>
+  <PdfUploader />
+</div>
             
             <div className="mt-8 pt-6 border-t border-gray-200">
               <Button
