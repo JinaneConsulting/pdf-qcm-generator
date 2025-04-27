@@ -21,11 +21,9 @@ class User(Base):
     # Champ pour l'authentification OAuth
     oidc_sub: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
     
-    # Relation avec les tokens d'accès
+    # Relations
     access_tokens: Mapped[List["AccessToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    
-    # Relation avec les PDFs (AJOUT)
-    pdfs: Mapped[List["PDF"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    pdfs: Mapped[List["PDF"]] = relationship("PDF", back_populates="user", cascade="all, delete-orphan")
     
     def can_login_with_password(self) -> bool:
         """Indique si l'utilisateur peut se connecter avec un mot de passe"""
@@ -34,6 +32,7 @@ class User(Base):
     def is_oauth_user(self) -> bool:
         """Indique si l'utilisateur est connecté via OAuth"""
         return self.oidc_sub is not None
+
 
 class AccessToken(Base):
     __tablename__ = "access_tokens"
