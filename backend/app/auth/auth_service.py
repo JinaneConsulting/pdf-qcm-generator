@@ -4,7 +4,8 @@ from typing import Dict, Any, Tuple, Optional
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import User
+from datetime import datetime, timedelta
+
 from app.database import get_async_session
 from app.email_utils import send_verification_email, send_reset_password_email
 from .jwt_utils import (
@@ -18,6 +19,7 @@ from .providers.password_provider import PasswordAuthProvider
 from .providers.google_provider import GoogleOAuthProvider
 from .security.bruteforce_protection import login_tracker
 from fastapi_users.password import PasswordHelper
+from app.models.user_model import AccessToken, User
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +32,19 @@ class AuthService:
         self.google_provider = GoogleOAuthProvider()
     
     async def authenticate_user(self, 
-                               provider: str, 
-                               data: Dict[str, Any], 
-                               request: Request, 
-                               session: AsyncSession) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+                          provider: str, 
+                          data: Dict[str, Any], 
+                          request: Request, 
+                          session: AsyncSession) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """
         Authentifie un utilisateur avec le provider spécifié et retourne un token JWT
         """
         user = None
         error = None
+        
+        # Récupérer l'adresse IP et le User-Agent
+        ip_address = self.password_provider.get_client_ip(request)
+        user_agent = request.headers.get("User-Agent", "")
         
         if provider == "password":
             user, error = await self.password_provider.authenticate(session, data, request)
@@ -57,6 +63,11 @@ class AuthService:
         if not user:
             return None, "Erreur d'authentification"
         
+        # Mettre à jour la date de dernière connexion
+        user.last_login = datetime.utcnow()
+        session.add(user)
+        await session.commit()
+        
         # Créer le token JWT
         token = create_access_token({
             "sub": str(user.id),
@@ -67,6 +78,18 @@ class AuthService:
             "full_name": user.full_name,
             "profile_picture": user.profile_picture
         })
+        
+        # Créer un enregistrement de token dans la base de données
+        access_token = AccessToken(
+            token=token,
+            user_id=user.id,
+            expires_at=datetime.utcnow() + timedelta(hours=1),  # Même durée que le JWT
+            ip_address=ip_address,
+            user_agent=user_agent[:255] if user_agent else None,
+            is_valid=True
+        )
+        session.add(access_token)
+        await session.commit()
         
         return {
             "access_token": token,
@@ -79,7 +102,7 @@ class AuthService:
                 "is_verified": user.is_verified
             }
         }, None
-    
+
     async def register_user(self, 
                            provider: str, 
                            data: Dict[str, Any], 

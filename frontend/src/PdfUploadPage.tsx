@@ -93,9 +93,9 @@ const PdfUploadPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="flex h-screen bg-quizzai-gradient">
       <Sidebar>
-        <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+        <div className="flex flex-col h-full bg-zinc-900 text-white overflow-hidden">
           <div className="p-4 flex items-center gap-2 min-h-[64px]">
             <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
               <span className="text-white font-bold">Q</span>
@@ -103,7 +103,7 @@ const PdfUploadPage: React.FC = () => {
             {!isSidebarCollapsed && user && (
               <div className="flex flex-col">
                 <span className="text-xl font-semibold">PDF QCM</span>
-                <span className="text-sm text-purple-400 font-medium">
+                <span className="text-sm text-quizzai-purple font-medium">
                   Bonjour, {user.email.split('@')[0]}
                 </span>
               </div>
@@ -112,7 +112,7 @@ const PdfUploadPage: React.FC = () => {
 
           <div className="flex-1 p-4 flex flex-col gap-3">
             <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
               onClick={() => navigate('/')}
             >
               <FileText size={18} />
@@ -122,7 +122,7 @@ const PdfUploadPage: React.FC = () => {
             </button>
             
             <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
               onClick={() => navigate('/profile')}
             >
               <FileSearch size={18} />
@@ -165,7 +165,8 @@ const PdfUploadPage: React.FC = () => {
 
       <div className="flex-1 overflow-auto p-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Télécharger un PDF</h1>
+        <h1 className="text-3xl font-bold mb-2">QuizzAi</h1>
+        <h2 className="text-xl text-gray-600 mb-8">Télécharger un PDF</h2>
           
           {authError && (
             <Alert variant="destructive" className="mb-6">
@@ -205,7 +206,7 @@ const PdfUploadPage: React.FC = () => {
                         
                         <Button
                           onClick={() => navigate('/')}
-                          className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md"
+                          className="bg-quizzai-gradient-strong hover:opacity-90 text-white py-2 px-4 rounded-md"
                         >
                           Retourner au QCM
                         </Button>

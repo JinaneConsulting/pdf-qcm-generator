@@ -94,47 +94,47 @@ const PasswordLoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   };
 
   return (
-    <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
+    <div className="w-full max-w-md p-6 space-y-6 bg-white rounded-md border border-blue-100 shadow-sm">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Connexion</h1>
-        <p className="mt-2 text-gray-600">Accédez à votre compte PDF QCM</p>
+        <h1 className="text-xl font-bold text-blue-600">Connexion</h1>
+        <p className="mt-2 text-sm text-blue-400">Accédez à votre compte QuizzAi</p>
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="text-sm">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-1">
+          <Label htmlFor="email" className="text-sm text-blue-600">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Mail className="absolute left-3 top-2.5 h-4 w-4 text-blue-400" />
             <Input
               id="email"
               type="email"
               placeholder="votre@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-9 text-sm border-blue-100 focus:border-blue-300 focus:ring-blue-200"
               required
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Mot de passe</Label>
+        <div className="space-y-1">
+          <Label htmlFor="password" className="text-sm text-blue-600">Mot de passe</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Lock className="absolute left-3 top-2.5 h-4 w-4 text-blue-400" />
             <Input
               id="password"
               type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-9 text-sm border-blue-100 focus:border-blue-300 focus:ring-blue-200"
               required
             />
           </div>
@@ -142,7 +142,7 @@ const PasswordLoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
 
         <Button
           type="submit"
-          className="w-full bg-purple-600 hover:bg-purple-700"
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white h-9"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -158,33 +158,33 @@ const PasswordLoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-blue-100"></div>
         </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Ou</span>
+        <div className="relative flex justify-center text-xs">
+          <span className="px-2 bg-white text-blue-400">Ou</span>
         </div>
       </div>
 
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="w-full h-9 text-sm border-blue-100 text-blue-600 hover:bg-blue-50"
         onClick={handleGoogleLogin}
       >
         <img
           src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
           alt="Google"
-          className="w-5 h-5 mr-2"
+          className="w-4 h-4 mr-2"
         />
         Continuer avec Google
       </Button>
 
-      <div className="text-center text-sm">
-        <span className="text-gray-600">Pas encore de compte ?</span>{' '}
+      <div className="text-center text-xs text-blue-400">
+        <span>Pas encore de compte ?</span>{' '}
         <button
           type="button"
           onClick={onToggleForm}
-          className="text-purple-600 hover:underline font-medium"
+          className="text-blue-600 hover:underline font-medium"
         >
           S'inscrire
         </button>

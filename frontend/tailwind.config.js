@@ -10,6 +10,16 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// Ajout des couleurs du logo QuizzAi
+  			quizzai: {
+  				orange: '#f7931e',
+  				red: '#ed1c24',
+  				purple: '#92278f',
+  				blue: '#29abe2',
+  				gradient: 'linear-gradient(135deg, #f7931e, #ed1c24, #92278f, #29abe2)'
+  			},
+        // Ajout de la couleur bleu-25 (bleu extrêmement clair)
+        'blue-25': '#f0f7ff',
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',
@@ -42,9 +52,12 @@ export default {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
+  		},
+  		// Ajout de classes pour le dégradé du logo
+  		backgroundImage: {
+  			'quizzai-gradient': 'linear-gradient(135deg, #f7931e, #ed1c24, #92278f, #29abe2)'
   		}
   	}
   },
   plugins: [import("tailwindcss-animate")],
 }
-

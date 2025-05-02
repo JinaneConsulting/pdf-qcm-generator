@@ -237,7 +237,7 @@ const PdfUploadComponent: React.FC<PdfUploadComponentProps> = ({ onUploadSuccess
           {/* Bouton pour déclencher la boîte de dialogue */}
           <Button 
             onClick={triggerFileInput}
-            className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md inline-block cursor-pointer"
+            className="bg-quizzai-gradient-strong hover:opacity-90 text-white py-2 px-4 rounded-md inline-block cursor-pointer"
           >
             Sélectionner un fichier
           </Button>
@@ -263,13 +263,13 @@ const PdfUploadComponent: React.FC<PdfUploadComponentProps> = ({ onUploadSuccess
             </div>
             
             {!isUploading && (
-              <Button
-                onClick={uploadFile}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Envoyer
-              </Button>
+             <Button 
+              onClick={uploadFile}
+              className="bg-quizzai-gradient-strong hover:opacity-90"
+            >
+              <Upload className="h-4 w-4 mr-2 text-white" style={{ color: 'white' }} />
+              Envoyer
+            </Button>
             )}
           </div>
           

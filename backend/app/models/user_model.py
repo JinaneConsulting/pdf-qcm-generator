@@ -1,4 +1,5 @@
-# app/models/user_model.py
+# Modification à apporter à app/models/user_model.py
+
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import DateTime, ForeignKey, String, Boolean, func
@@ -18,6 +19,9 @@ class User(Base):
     profile_picture: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
+    # Ajouter le champ pour suivre la dernière connexion
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    
     # Champ pour l'authentification OAuth
     oidc_sub: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
     
@@ -32,7 +36,10 @@ class User(Base):
     def is_oauth_user(self) -> bool:
         """Indique si l'utilisateur est connecté via OAuth"""
         return self.oidc_sub is not None
-
+    
+    def update_last_login(self):
+        """Met à jour la date de dernière connexion"""
+        self.last_login = datetime.now()
 
 class AccessToken(Base):
     __tablename__ = "access_tokens"
@@ -43,3 +50,8 @@ class AccessToken(Base):
     user: Mapped["User"] = relationship(back_populates="access_tokens")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    
+    # Ajouter ces champs pour plus d'informations sur le token
+    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    is_valid: Mapped[bool] = mapped_column(Boolean, default=True)

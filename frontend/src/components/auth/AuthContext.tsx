@@ -1,5 +1,9 @@
+// Fichier complet corrigé de src/components/auth/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { API_URL, BASIC_AUTH } from '../../config';
+
+// Constante pour l'email administrateur
+const ADMIN_EMAIL = 'jchraa@jinane-consulting.com';
 
 interface User {
   id: string;
@@ -21,6 +25,7 @@ interface AuthContextType {
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  isAdmin: boolean;
 }
 
 // Créer le contexte avec une valeur par défaut undefined
@@ -41,6 +46,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [token, setTokenState] = useState<string | null>(localStorage.getItem('token') || localStorage.getItem('auth_token'));
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   // Fonction pour définir le token et le stocker dans localStorage
   const setToken = (newToken: string | null) => {
@@ -168,20 +174,24 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     setError(null);
   };
 
+  const contextValue = React.useMemo<AuthContextType>(
+    () => ({
+      user,
+      token,
+      setToken,
+      isLoading,
+      error,
+      login,
+      register,
+      logout,
+      clearError,
+      isAdmin
+    }),
+    [user, token, isLoading, error, isAdmin]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        setToken,
-        isLoading,
-        error,
-        login,
-        register,
-        logout,
-        clearError,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

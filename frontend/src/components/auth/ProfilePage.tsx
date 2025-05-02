@@ -19,7 +19,7 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="flex h-screen bg-quizzai-gradient">
       {/* Sidebar */}
       <div className="w-72 bg-black text-white flex flex-col">
         {/* Logo */}
@@ -29,7 +29,7 @@ const ProfilePage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-semibold">PDF QCM</span>
-            <span className="text-sm text-purple-400 font-medium">
+            <span className="text-sm text-quizzai-purple font-medium">
               Bonjour, {user.email.split('@')[0]}
             </span>
           </div>
@@ -38,14 +38,14 @@ const ProfilePage: React.FC = () => {
         {/* Navigation */}
         <div className="flex-1 p-4 flex flex-col gap-3">
           <button 
-            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+            className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
             onClick={() => window.location.href = '/'}
           >
             <span>Tableau de bord</span>
           </button>
           
           <button 
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+            className="w-full bg-quizzai-gradient-strong hover:opacity-90 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
           >
             <UserIcon size={18} />
             <span>Mon profil</span>
@@ -136,7 +136,7 @@ const ProfilePage: React.FC = () => {
             
             <div className="mt-8 pt-6 border-t border-gray-200">
               <Button
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-quizzai-gradient-strong hover:opacity-90"
                 onClick={() => window.location.href = '/'}
               >
                 Retour au tableau de bord

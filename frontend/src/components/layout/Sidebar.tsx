@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ children, className }) => {
       
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute top-4 -right-3 bg-purple-600 text-white rounded-full p-1 shadow-md z-10 transition-all duration-300 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
+        className="absolute top-4 -right-3 bg-blue-50 text-blue-400 rounded-full p-1 shadow-sm z-10 transition-all duration-200 hover:bg-blue-100 focus:outline-none focus:ring-1 focus:ring-blue-200"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {collapsed ? 

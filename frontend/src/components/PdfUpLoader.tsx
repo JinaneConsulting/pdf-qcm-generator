@@ -119,7 +119,7 @@ const PdfUploader: React.FC = () => {
       </CardContent>
       <CardFooter>
         <Button 
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-quizzai-gradient-strong hover:opacity-90"
           onClick={handleUpload}
           disabled={!selectedFile || isUploading}
         >

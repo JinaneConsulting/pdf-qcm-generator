@@ -46,10 +46,10 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="flex h-screen bg-quizzai-gradient">
       {/* Sidebar avec le composant réutilisable */}
       <Sidebar>
-        <div className="flex flex-col h-full bg-black text-white overflow-hidden">
+        <div className="flex flex-col h-full bg-zinc-900 text-white overflow-hidden">
           {/* Logo */}
           <div className="p-4 flex items-center gap-2">
             <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
@@ -58,7 +58,7 @@ const ProfilePage: React.FC = () => {
             {!isSidebarCollapsed && (
               <div className="flex flex-col">
                 <span className="text-xl font-semibold whitespace-nowrap">PDF QCM</span>
-                <span className="text-sm text-purple-400 font-medium whitespace-nowrap">
+                <span className="text-sm text-quizzai-purple font-medium whitespace-nowrap">
                   Bonjour, {user.email.split('@')[0]}
                 </span>
               </div>
@@ -81,7 +81,7 @@ const ProfilePage: React.FC = () => {
           {/* Navigation */}
           <div className="flex-1 p-4 flex flex-col gap-3">
             <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
               onClick={() => window.location.href = '/'}
             >
               <span className="inline-block w-5 h-5 flex-shrink-0">⌂</span> {/* Icône de maison */}
@@ -91,7 +91,7 @@ const ProfilePage: React.FC = () => {
             </button>
             
             <button 
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
+              className="w-full bg-quizzai-gradient-strong hover:opacity-90 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
             >
               <UserIcon size={18} />
               {!isSidebarCollapsed && (
@@ -208,7 +208,7 @@ const ProfilePage: React.FC = () => {
             
             <div className="mt-8 pt-6 border-t border-gray-200">
               <Button
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-quizzai-gradient-strong hover:opacity-90"
                 onClick={() => window.location.href = '/'}
               >
                 Retour au tableau de bord

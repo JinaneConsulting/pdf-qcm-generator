@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,28 +6,145 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
+  --background-start-rgb: 249, 250, 251;
   --background-end-rgb: 255, 255, 255;
+  
+  /* Palette de couleurs neutres */
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  --color-bg-primary: #f9fafb;
+  --color-bg-secondary: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-accent: #1f2937;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: #f5f5f5;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
   font-family: 'Inter', sans-serif;
-}
-
-.font-handwriting {
-  font-family: 'Caveat', cursive;
-  font-size: 1.25rem;
-  line-height: 1.2;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
-/* Gradient background */
-.bg-gradient-custom {
-  background: linear-gradient(to bottom right, #f0f4ff, #e6eeff, #f5f0ff);
+/* Couleurs principales pour l'interface sobre */
+.bg-quizzai-gradient {
+  background-color: #f9fafb; /* Gris très pâle */
+}
+
+.bg-quizzai-gradient-strong {
+  background-color: #1f2937; /* Gray-800 - sobre et élégant */
+}
+
+/* Classes pour les accents de couleur */
+.text-quizzai-purple {
+  color: #4b5563; /* Gray-600 - neutre et sobre */
+}
+
+.border-quizzai-purple {
+  border-color: #4b5563; /* Gray-600 */
+}
+
+.hover\:border-quizzai-blue:hover {
+  border-color: #6b7280; /* Gray-500 */
+}
+
+/* Classes utilitaires pour l'interface */
+.quizzai-primary {
+  color: #1f2937; /* gray-800 */
+}
+
+.quizzai-secondary {
+  color: #4b5563; /* gray-600 */
+}
+
+.quizzai-accent {
+  color: #111827; /* gray-900 */
+}
+
+.quizzai-background {
+  background-color: #f9fafb; /* gray-50 */
+}
+
+.quizzai-card {
+  background-color: white;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Classes pour les boutons */
+.btn-primary {
+  @apply bg-gray-800 hover:bg-gray-900 text-white transition-colors duration-200 font-medium py-2 px-4 rounded-md;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 transition-colors duration-200 font-medium py-2 px-4 rounded-md;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 font-medium py-2 px-4 rounded-md;
+}
+
+/* Classes pour les inputs */
+.quizzai-input {
+  @apply bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200;
+}
+
+/* Classes pour les sidebar et navigation */
+.sidebar-link {
+  @apply w-full bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2 transition-colors duration-200;
+}
+
+.sidebar-divider {
+  @apply border-t border-gray-800;
+}
+
+/* Classes pour les états de drag and drop */
+.dropzone {
+  @apply border-2 border-dashed rounded-md p-8 text-center transition-colors duration-200;
+}
+
+.dropzone-active {
+  @apply border-gray-500 bg-gray-50;
+}
+
+.dropzone-inactive {
+  @apply border-gray-300 hover:border-gray-400;
+}
+
+/* Classes pour les questions et réponses */
+.question-card {
+  @apply mb-6 p-5 bg-white rounded-md border border-gray-200 shadow-sm;
+}
+
+.correct-answer {
+  @apply bg-green-50 text-green-700;
+}
+
+.incorrect-answer {
+  @apply bg-red-50 text-red-700;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.5rem;
+  }
 }

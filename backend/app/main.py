@@ -10,6 +10,7 @@ from app.auth import router as auth_router
 from app.auth import get_current_user
 from app.pdf import router as pdf_router  # Importer le router PDF
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.admin import router as admin_router
 
 # Logging
 logging.basicConfig(level=logging.DEBUG)
@@ -64,6 +65,8 @@ app.include_router(auth_router)
 
 # Inclure les routes PDF
 app.include_router(pdf_router)
+
+app.include_router(admin_router)
 
 @app.on_event("startup")
 async def startup_event():

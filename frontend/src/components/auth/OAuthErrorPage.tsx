@@ -27,7 +27,7 @@ const OAuthErrorPage: React.FC = () => {
         <div className="text-center">
           <Button
             onClick={() => navigate('/')}
-            className="w-full bg-purple-600 hover:bg-purple-700"
+            className="w-full bg-slate-700 hover:bg-slate-800 text-white"
           >
             Retour à l'accueil
           </Button>
