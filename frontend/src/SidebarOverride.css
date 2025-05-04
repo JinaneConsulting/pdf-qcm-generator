@@ -1,0 +1,39 @@
+/* Style forcé pour tous les conteneurs de sidebar */
+.sidebar-container,
+[class*="bg-black"],
+[class*="bg-zinc-800"],
+[class*="bg-zinc-900"] {
+  background-color: #EFF6FF !important; /* blue-50 */
+  color: #1E40AF !important; /* blue-800 */
+  border-right: 1px solid #DBEAFE !important; /* blue-100 */
+}
+
+/* Style forcé pour tous les boutons dans les sidebars */
+.sidebar-container button {
+  background-color: #DBEAFE !important; /* blue-100 */
+  color: #2563EB !important; /* blue-600 */
+  border: none !important;
+}
+
+.sidebar-container button:hover {
+  background-color: #BFDBFE !important; /* blue-200 */
+}
+
+/* Forcer les séparateurs et bordures */
+.sidebar-container [class*="border-t"],
+.sidebar-container [class*="border-b"],
+.sidebar-container [class*="border-r"],
+.sidebar-container [class*="border-l"] {
+  border-color: #DBEAFE !important; /* blue-100 */
+}
+
+/* Style forcé pour les icônes dans la sidebar */
+.sidebar-container svg {
+  color: #2563EB !important; /* blue-600 */
+}
+
+/* Cibler spécifiquement les divs avec bg-zinc-800 à l'intérieur de la sidebar */
+.sidebar-container [class*="bg-zinc-800"] {
+  background-color: #DBEAFE !important; /* blue-100 */
+  color: #2563EB !important; /* blue-600 */
+}

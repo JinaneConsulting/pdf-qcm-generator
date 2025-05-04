@@ -1,38 +1,19 @@
-// src/components/user/ProfilePage.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '../ui/button';
-import Sidebar from '../layout/Sidebar';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import UnifiedSidebar from '../layout/UnifiedSidebar';
+import { UserRound } from 'lucide-react';
 import PdfUploader from '@/components/PdfUpLoader';
+import { useNavigate } from 'react-router-dom';
+
 
 const ProfilePage: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  // Observer pour détecter l'état de la sidebar
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-          if (sidebarElement) {
-            const isCollapsed = sidebarElement.className.includes('w-16');
-            setIsSidebarCollapsed(isCollapsed);
-          }
-        }
-      });
-    });
-
-    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-    if (sidebarElement) {
-      observer.observe(sidebarElement, { attributes: true });
-      // État initial
-      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
-    }
-
-    return () => observer.disconnect();
-  }, []);
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
 
   if (!user) {
     return (
@@ -47,90 +28,10 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-quizzai-gradient">
-      {/* Sidebar avec le composant réutilisable */}
-      <Sidebar>
-        <div className="flex flex-col h-full bg-zinc-900 text-white overflow-hidden">
-          {/* Logo */}
-          <div className="p-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold">Q</span>
-            </div>
-            {!isSidebarCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold whitespace-nowrap">PDF QCM</span>
-                <span className="text-sm text-quizzai-purple font-medium whitespace-nowrap">
-                  Bonjour, {user.email.split('@')[0]}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Info utilisateur */}
-          <div className="p-4 border-b border-zinc-800">
-            <div className="bg-zinc-800 p-3 rounded-md">
-              <div className="flex items-center gap-2">
-                {!isSidebarCollapsed && (
-                  <div className="truncate">
-                    <div className="text-sm font-medium truncate">{user.email}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex-1 p-4 flex flex-col gap-3">
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
-              onClick={() => window.location.href = '/'}
-            >
-              <span className="inline-block w-5 h-5 flex-shrink-0">⌂</span> {/* Icône de maison */}
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Tableau de bord</span>
-              )}
-            </button>
-            
-            <button 
-              className="w-full bg-quizzai-gradient-strong hover:opacity-90 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-            >
-              <UserIcon size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Mon profil</span>
-              )}
-            </button>
-          </div>
-
-          {/* Bottom actions avec photo de profil au-dessus de déconnexion */}
-          <div className="p-4 border-t border-zinc-800">
-            {/* Photo de profil */}
-            <div className="mb-4 flex justify-center">
-              {user.profile_picture ? (
-                <img 
-                  src={user.profile_picture} 
-                  alt="Photo de profil" 
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-purple-600"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0 overflow-hidden">
-                  {/* Avatar neutre/non genré */}
-                  <UserIcon size={28} />
-                </div>
-              )}
-            </div>
-            
-            {/* Bouton de déconnexion */}
-            <div 
-              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Déconnexion</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </Sidebar>
+      <UnifiedSidebar 
+        currentPage="profile"
+        onNavigate={handleNavigate}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-8">
@@ -147,7 +48,7 @@ const ProfilePage: React.FC = () => {
                 />
               ) : (
                 <div className="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center text-white mr-4 overflow-hidden">
-                  <UserIcon size={48} />
+                  <UserRound size={48} />
                 </div>
               )}
               <div>
@@ -201,15 +102,16 @@ const ProfilePage: React.FC = () => {
                 </p>
               </div>
             </div>
+            
             <div className="mt-8">
-  <h2 className="text-2xl font-bold mb-4">Télécharger un PDF</h2>
-  <PdfUploader />
-</div>
+              <h2 className="text-2xl font-bold mb-4">Télécharger un PDF</h2>
+              <PdfUploader />
+            </div>
             
             <div className="mt-8 pt-6 border-t border-gray-200">
               <Button
                 className="bg-quizzai-gradient-strong hover:opacity-90"
-                onClick={() => window.location.href = '/'}
+                onClick={() => navigate('/')}
               >
                 Retour au tableau de bord
               </Button>

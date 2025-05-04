@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/layout/Sidebar';
-import { LogOut, FileText, FileSearch, AlertTriangle } from 'lucide-react';
+import UnifiedSidebar from './components/layout/UnifiedSidebar';
 import PdfUploadComponent from './PdfUploadComponent';
 import { useAuth } from './components/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Button } from './components/ui/button';
 import { API_URL } from './config';
+import { AlertTriangle } from 'lucide-react';
 
 const PdfUploadPage: React.FC = () => {
-  const { user, token, logout, isLoading, error: authError } = useAuth();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(true);
+  // ⚠️ Une seule ligne destructuration useAuth
+  const { token, isLoading, error: authError } = useAuth();
+  
+  // Supprimé le double appel à useAuth() qui causait les erreurs de redéclaration
+  
   const [uploadSuccess, setUploadSuccess] = useState<boolean>(false);
   const [fileId, setFileId] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -18,35 +21,16 @@ const PdfUploadPage: React.FC = () => {
   
   const navigate = useNavigate();
 
-  // Observer pour détecter l'état de la sidebar
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-          if (sidebarElement) {
-            const isCollapsed = sidebarElement.className.includes('w-16');
-            setIsSidebarCollapsed(isCollapsed);
-          }
-        }
-      });
-    });
-
-    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-    if (sidebarElement) {
-      observer.observe(sidebarElement, { attributes: true });
-      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
   const handleUploadSuccess = (id: string, name: string) => {
     console.log('Upload successful, ID:', id, 'Name:', name);
     setFileId(id);
     setFileName(name);
     setUploadSuccess(true);
     setUploadAttempted(true);
+  };
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
   };
 
   // Vérifier que le token est disponible
@@ -61,7 +45,6 @@ const PdfUploadPage: React.FC = () => {
   useEffect(() => {
     const verifyUploadsFolder = async () => {
       try {
-        // Juste une simple requête pour vérifier la connexion
         const response = await fetch(`${API_URL}/`, {
           method: 'GET',
           headers: {
@@ -94,79 +77,15 @@ const PdfUploadPage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-quizzai-gradient">
-      <Sidebar>
-        <div className="flex flex-col h-full bg-zinc-900 text-white overflow-hidden">
-          <div className="p-4 flex items-center gap-2 min-h-[64px]">
-            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold">Q</span>
-            </div>
-            {!isSidebarCollapsed && user && (
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold">PDF QCM</span>
-                <span className="text-sm text-quizzai-purple font-medium">
-                  Bonjour, {user.email.split('@')[0]}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 p-4 flex flex-col gap-3">
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
-              onClick={() => navigate('/')}
-            >
-              <FileText size={18} />
-              {!isSidebarCollapsed && (
-                <span>Retour au QCM</span>
-              )}
-            </button>
-            
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
-              onClick={() => navigate('/profile')}
-            >
-              <FileSearch size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Mon profil</span>
-              )}
-            </button>
-          </div>
-          
-          <div className="p-4 border-t border-zinc-800">
-            {/* Photo de profil */}
-            <div className="mb-4 flex justify-center">
-              {user && user.profile_picture ? (
-                <img 
-                  src={user.profile_picture} 
-                  alt="Photo de profil" 
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-purple-600"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0 overflow-hidden">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                    <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
-            </div>
-            
-            <div 
-              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut size={18} />
-              {!isSidebarCollapsed && (
-                <span>Déconnexion</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </Sidebar>
+      <UnifiedSidebar 
+        currentPage="upload"
+        onNavigate={handleNavigate}
+      />
 
       <div className="flex-1 overflow-auto p-8">
         <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">QuizzAi</h1>
-        <h2 className="text-xl text-gray-600 mb-8">Télécharger un PDF</h2>
+          <h1 className="text-3xl font-bold mb-2">QuizzAi</h1>
+          <h2 className="text-xl text-gray-600 mb-8">Télécharger un PDF</h2>
           
           {authError && (
             <Alert variant="destructive" className="mb-6">

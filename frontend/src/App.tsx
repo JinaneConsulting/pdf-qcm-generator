@@ -1,6 +1,6 @@
-import Sidebar from './components/layout/Sidebar';
+import UnifiedSidebar from './components/layout/UnifiedSidebar';
 import { useState, useRef, useEffect } from 'react';
-import { FileUp, Loader2, FileText, CheckCircle, XCircle, Plus, LogOut, Upload, FileSearch } from 'lucide-react';
+import { FileUp, Loader2, FileText, CheckCircle, XCircle, Upload, Shield, UserRound } from 'lucide-react';
 import './App.css';
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
@@ -41,8 +41,7 @@ const BASIC_AUTH = `Basic ${btoa(API_CREDENTIALS)}`;
 
 // Définir le composant PdfUploadPage
 const PdfUploadPage: React.FC = () => {
-  const { user, token, logout } = useAuth();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(true);
+  const { token } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -52,29 +51,6 @@ const PdfUploadPage: React.FC = () => {
     message: string;
   }>({ show: false, success: false, message: '' });
   const [isDragging, setIsDragging] = useState(false);
-
-  // Observer pour détecter l'état de la sidebar
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-          if (sidebarElement) {
-            const isCollapsed = sidebarElement.className.includes('w-16');
-            setIsSidebarCollapsed(isCollapsed);
-          }
-        }
-      });
-    });
-
-    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-    if (sidebarElement) {
-      observer.observe(sidebarElement, { attributes: true });
-      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
-    }
-
-    return () => observer.disconnect();
-  }, []);
 
   // Gérer la sélection du fichier
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,47 +186,16 @@ const PdfUploadPage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <Sidebar>
-        <div className="flex flex-col h-full bg-black text-white overflow-hidden">
-          <div className="p-4 flex items-center gap-2 min-h-[64px]">
-            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold">Q</span>
-            </div>
-            {!isSidebarCollapsed && user && (
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold">PDF QCM</span>
-                <span className="text-sm text-purple-400 font-medium">
-                  Bonjour, {user.email.split('@')[0]}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 p-4 flex flex-col gap-3">
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-              onClick={() => window.location.href = '/'}
-            >
-              <FileText size={18} />
-              {!isSidebarCollapsed && (
-                <span>Retour au QCM</span>
-              )}
-            </button>
-          </div>
-          
-          <div className="p-4 border-t border-zinc-800">
-            <div 
-              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut size={18} />
-              {!isSidebarCollapsed && (
-                <span>Déconnexion</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </Sidebar>
+      <UnifiedSidebar 
+        currentPage="upload"
+        onNavigate={(path) => {
+          if (path === '/') {
+            window.location.href = '/';
+          } else if (path === '/profile') {
+            window.location.href = '/profile';
+          }
+        }}
+      />
 
       <div className="flex-1 overflow-auto p-8">
         <div className="max-w-3xl mx-auto">
@@ -359,7 +304,7 @@ const PdfUploadPage: React.FC = () => {
 
 // Composant principal QCM
 const QCMApp: React.FC = () => {
-  const { user, token, logout } = useAuth();
+  const { token, user } = useAuth();
   const [file, setFile] = useState<File | null>(null)
   const [fileId, setFileId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState<boolean>(false)
@@ -371,33 +316,6 @@ const QCMApp: React.FC = () => {
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({})
   const [showResults, setShowResults] = useState<boolean>(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  
-  // Ajout de l'état pour suivre si la sidebar est repliée
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(true);
-
-  // Observer pour détecter l'état de la sidebar
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-          if (sidebarElement) {
-            const isCollapsed = sidebarElement.className.includes('w-16');
-            setIsSidebarCollapsed(isCollapsed);
-          }
-        }
-      });
-    });
-
-    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-    if (sidebarElement) {
-      observer.observe(sidebarElement, { attributes: true });
-      // État initial
-      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
-    }
-
-    return () => observer.disconnect();
-  }, []);
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -539,143 +457,264 @@ const QCMApp: React.FC = () => {
     };
   }, [pdfUrl]);
 
-  return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Sidebar avec photo de profil */}
-      <Sidebar>
-        <div className="flex flex-col h-full bg-black text-white overflow-hidden">
-          {/* Logo with User Name */}
-          <div className="p-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold">Q</span>
-            </div>
-            {!isSidebarCollapsed && user && (
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold whitespace-nowrap">PDF QCM</span>
-                <span className="text-sm text-purple-400 font-medium whitespace-nowrap">
-                  Bonjour, {user.email.split('@')[0]}
-                </span>
-              </div>
-            )}
-          </div>
+  const handleNavigate = (path: string) => {
+    if (path === '/upload-pdf') {
+      window.location.href = '/upload-pdf';
+    } else if (path === '/profile') {
+      window.location.href = '/profile';
+    } else if (path === '/') {
+      resetQuiz();
+    }
+  };
 
-          {/* User info avec email seulement */}
-          <div className="p-4 border-b border-zinc-800">
-            <div className="bg-zinc-800 p-3 rounded-md">
-              <div className="flex items-center gap-2">
-                <div className="truncate">
-                  {!isSidebarCollapsed && user && (
-                    <div className="text-sm font-medium truncate">{user.email}</div>
-                  )}
-                </div>
+  const renderHomeContent = () => {
+    if (!file) {
+      // Affiche les liens quand aucun PDF n'est sélectionné
+      return (
+        <div className="max-w-full mx-auto px-4 py-8">
+          {/* Cartes de navigation */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Carte Télécharger PDF */}
+            <div 
+              onClick={() => window.location.href = '/upload-pdf'}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4 mx-auto">
+                <FileUp className="h-8 w-8 text-purple-600" />
               </div>
+              <h3 className="text-xl font-semibold text-center mb-2">Télécharger un PDF</h3>
+              <p className="text-gray-600 text-center">
+                Importez vos documents pour créer des questionnaires
+              </p>
             </div>
-          </div>
 
-          {/* PDF Info - Only shown when a PDF is uploaded */}
-          {file && fileId && (
-            <div className="p-4 border-b border-zinc-800">
-              <div className="bg-zinc-800 p-3 rounded-md">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-10 bg-red-500 rounded flex items-center justify-center text-white text-xs">PDF</div>
-                  {!isSidebarCollapsed && (
-                    <div className="truncate">
-                      <div className="text-sm font-medium truncate">{file.name}</div>
-                      <div className="text-xs text-gray-400">{Math.round(file.size / 1024)} KB</div>
-                    </div>
-                  )}
-                </div>
+            {/* Carte Mon Profile */}
+            <div 
+              onClick={() => window.location.href = '/profile'}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
+                <UserRound className="h-8 w-8 text-blue-600" />
               </div>
+              <h3 className="text-xl font-semibold text-center mb-2">Mon profil</h3>
+              <p className="text-gray-600 text-center">
+                Gérez vos informations personnelles
+              </p>
+            </div>
+
+            {/* Carte Admin - visible uniquement pour les administrateurs */}
+          {user && user.is_superuser && (
+            <div 
+              onClick={() => window.location.href = '/admin'}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4 mx-auto">
+                <Shield className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-2">Administration</h3>
+              <p className="text-gray-600 text-center">
+                Accédez au panneau d'administration
+              </p>
             </div>
           )}
-
-          {/* Navigation */}
-          <div className="flex-1 p-4 flex flex-col gap-3">
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-              onClick={resetQuiz}
-            >
-              <Plus size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Nouveau QCM</span>
-              )}
-            </button>
-            
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-              onClick={() => window.location.href = '/upload-pdf'}
-            >
-              <Upload size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Upload PDF</span>
-              )}
-            </button>
-            
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-              onClick={() => window.location.href = '/profile'}
-            >
-              <FileSearch size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Mon profil</span>
-              )}
-            </button>
           </div>
 
-          {/* Bottom actions avec photo de profil au-dessus de la déconnexion */}
-          <div className="p-4 border-t border-zinc-800">
-            {/* Photo de profil */}
-            <div className="mb-4 flex justify-center">
-              {user && user.profile_picture ? (
-                <img 
-                  src={user.profile_picture} 
-                  alt="Photo de profil" 
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-purple-600"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0 overflow-hidden">
-                  {/* Avatar non genré - icône utilisateur neutre */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                    <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clipRule="evenodd" />
-                  </svg>
+          
+        </div>
+      );
+    }
+
+    // Interface existante quand un PDF est sélectionné
+    return (
+      file && pdfUrl ? (
+        <div className="flex h-[calc(100vh-80px)]">
+          {/* Partie gauche - Affichage du PDF */}
+          <div className="w-1/2 border-r border-gray-300 pr-4 h-full">
+            <h2 className="text-xl font-bold mb-4">Document PDF</h2>
+            <div className="h-[calc(100%-40px)] bg-white rounded-lg border border-gray-200">
+              <iframe
+                src={pdfUrl}
+                title="PDF Viewer"
+                className="w-full h-full rounded-lg"
+              />
+            </div>
+          </div>
+          
+          {/* Partie droite - Génération de QCM */}
+          <div className="w-1/2 pl-4 h-full overflow-auto">
+            <h2 className="text-xl font-bold mb-4">Générer un QCM</h2>
+            
+            {/* File info */}
+            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
+              <div className="flex items-center">
+                <FileText className="h-6 w-6 text-purple-600 mr-2" />
+                <span className="font-medium">{file.name}</span>
+              </div>
+              
+              {/* Upload button si pas encore téléchargé */}
+              {!fileId && (
+                <div className="mt-4">
+                  <Button 
+                    onClick={handleUpload} 
+                    disabled={!file || isUploading}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Téléchargement...
+                      </>
+                    ) : (
+                      'Télécharger PDF'
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
+
+            {/* Error message */}
+            {uploadError && (
+              <Alert variant="destructive" className="mb-4">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
             
-            {/* Bouton de déconnexion */}
-            <div 
-              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut size={18} />
-              {!isSidebarCollapsed && (
-                <span className="whitespace-nowrap">Déconnexion</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </Sidebar>
+            {/* QCM Generation - Only shown when a PDF is uploaded */}
+            {fileId && (
+              <div className="bg-white p-6 rounded-lg border border-gray-200">
+                <h2 className="text-2xl font-bold mb-4">Générer un QCM</h2>
+                <p className="text-gray-600 mb-4">
+                  Configurez les paramètres pour générer votre questionnaire à choix multiples
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="num-questions">Nombre de questions</Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                       id="num-questions"
+                       type="number"
+                       min={1}
+                       max={20}
+                       value={numQuestions}
+                       onChange={(e) => setNumQuestions(parseInt(e.target.value) || 5)}
+                       className="w-24"
+                     />
+                     <span className="text-sm text-gray-500">(1-20 questions)</span>
+                   </div>
+                 </div>
+                 
+                 <Button 
+                   onClick={handleGenerateQCM} 
+                   disabled={isGenerating}
+                   className="w-full bg-purple-600 hover:bg-purple-700"
+                 >
+                   {isGenerating ? (
+                     <>
+                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                       Génération en cours...
+                     </>
+                   ) : (
+                     'Générer QCM'
+                   )}
+                 </Button>
+               </div>
+             </div>
+           )}
+           
+           {/* Choix de nouveau fichier */}
+           <div className="mt-4">
+             <Label htmlFor="pdf-upload-new" className="mb-2 block">Changer de fichier PDF :</Label>
+             <div className="flex gap-2">
+               <label htmlFor="pdf-upload-new" className="flex-1">
+                 <Button className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md flex items-center justify-center gap-2">
+                   <FileUp size={18} />
+                   Nouveau PDF
+                 </Button>
+                 <Input
+                   id="pdf-upload-new"
+                   type="file"
+                   accept=".pdf"
+                   className="hidden"
+                   onChange={handleFileChange}
+                 />
+               </label>
+               <Button 
+                 onClick={resetQuiz}
+                 className="bg-red-600 hover:bg-red-700"
+               >
+                 Réinitialiser
+               </Button>
+             </div>
+           </div>
+         </div>
+       </div>
+     ) : (
+       <div className="relative mt-12 mb-16">
+         <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center bg-white">
+           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+             <FileUp className="h-8 w-8 text-gray-500" />
+           </div>
+           <p className="text-lg mb-6">Cliquez pour télécharger, ou glissez votre PDF ici</p>
+           <label htmlFor="pdf-upload">
+             <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md flex items-center gap-2">
+               <FileUp size={18} />
+               Télécharger PDF
+             </Button>
+             <Input
+               id="pdf-upload"
+               ref={fileInputRef}
+               type="file"
+               accept=".pdf"
+               className="hidden"
+               onChange={handleFileChange}
+             />
+           </label>
+         </div>
+         {uploadError && (
+           <Alert variant="destructive" className="mt-4">
+             <XCircle className="h-4 w-4" />
+             <AlertTitle>Erreur</AlertTitle>
+             <AlertDescription>{uploadError}</AlertDescription>
+           </Alert>
+         )}
+       </div>
+     )
+   );
+  };
+
+  return (
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      <UnifiedSidebar 
+        currentPage="home"
+        onNavigate={handleNavigate}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {/* Home View - Upload PDF and Generate QCM */}
-        {view === 'home' && (
-          <div className="max-w-full mx-auto px-4 py-8">
-            {/* Main Heading - Visible only when no PDF is uploaded */}
-            {!file && (
-              <div className="text-center mb-6">
-                <h1 className="text-5xl font-bold mb-4">
-                  Générez des <span className="bg-purple-600 text-white px-2 py-1 rounded">QCM</span> à partir de votre PDF
-                </h1>
+        {view === 'home' && renderHomeContent()}
+        
+        {/* Quiz View - Answer QCM questions */}
+        {view === 'quiz' && qcmData && (
+          <div className="flex-1 flex flex-col">
+            {/* Quiz Header */}
+            <div className="border-b p-4 bg-white">
+              <div className="max-w-4xl mx-auto">
+                <h1 className="text-2xl font-bold">{qcmData.pdf_title}</h1>
+                <p className="text-gray-600">
+                  Répondez aux questions générées à partir de votre document
+                </p>
               </div>
-            )}
+            </div>
 
-            {/* Écran partagé quand un PDF est uploadé */}
-            {file && pdfUrl ? (
-              <div className="flex h-[calc(100vh-80px)]">
-                {/* Partie gauche - Affichage du PDF */}
-                <div className="w-1/2 border-r border-gray-300 pr-4 h-full">
-                  <h2 className="text-xl font-bold mb-4">Document PDF</h2>
+            {/* Écran partagé pour le quiz */}
+            <div className="flex-1 flex">
+              {/* PDF Viewer - Left Side */}
+              {pdfUrl && (
+                <div className="w-1/2 border-r border-gray-300 p-4 overflow-auto">
+                  <h2 className="text-xl font-bold mb-4">Document de référence</h2>
                   <div className="h-[calc(100%-40px)] bg-white rounded-lg border border-gray-200">
                     <iframe
                       src={pdfUrl}
@@ -684,325 +723,120 @@ const QCMApp: React.FC = () => {
                     />
                   </div>
                 </div>
-                
-                {/* Partie droite - Génération de QCM */}
-                <div className="w-1/2 pl-4 h-full overflow-auto">
-                  <h2 className="text-xl font-bold mb-4">Générer un QCM</h2>
-                  
-                  {/* File info */}
-                  <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center">
-                      <FileText className="h-6 w-6 text-purple-600 mr-2" />
-                      <span className="font-medium">{file.name}</span>
-                    </div>
-                    
-                    {/* Upload button si pas encore téléchargé */}
-                    {!fileId && (
-                      <div className="mt-4">
-                        <Button 
-                          onClick={handleUpload} 
-                          disabled={!file || isUploading}
-                          className="w-full bg-purple-600 hover:bg-purple-700"
-                        >
-                          {isUploading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Téléchargement...
-                            </>
-                          ) : (
-                            'Télécharger PDF'
-                          )}
-                        </Button>
+              )}
+              
+              {/* Quiz Content - Right Side */}
+              <div className="flex-1 overflow-auto p-4">
+                <div className="max-w-4xl mx-auto">
+                  {/* Score display */}
+                  {showResults && (
+                    <div className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                      <h2 className="text-xl font-bold mb-2">Résultats</h2>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">
+                          Score: {getScore()} / {qcmData.questions.length}
+                        </span>
+                        <span className="text-sm font-medium">
+                          {Math.round((getScore() / qcmData.questions.length) * 100)}%
+                        </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Error message */}
-                  {uploadError && (
-                    <Alert variant="destructive" className="mb-4">
-                      <XCircle className="h-4 w-4" />
-                      <AlertTitle>Erreur</AlertTitle>
-                      <AlertDescription>{uploadError}</AlertDescription>
-                    </Alert>
+                      <Progress value={(getScore() / qcmData.questions.length) * 100} className="h-2" />
+                    </div>
                   )}
-                  
-                  {/* QCM Generation - Only shown when a PDF is uploaded */}
-                  {fileId && (
-                    <div className="bg-white p-6 rounded-lg border border-gray-200">
-                      <h2 className="text-2xl font-bold mb-4">Générer un QCM</h2>
-                      <p className="text-gray-600 mb-4">
-                        Configurez les paramètres pour générer votre questionnaire à choix multiples
-                      </p>
+
+                  {/* Questions */}
+                  {qcmData.questions.map((question, index) => (
+                    <div key={question.id} className="mb-8 p-6 bg-white rounded-lg border border-gray-200">
+                      <div className="font-medium text-lg mb-4">
+                        Question {index + 1}: {question.text}
+                      </div>
                       
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="num-questions">Nombre de questions</Label>
-                          <div className="flex items-center space-x-2">
-                            <Input
-                             id="num-questions"
-                             type="number"
-                             min={1}
-                             max={20}
-                             value={numQuestions}
-                             onChange={(e) => setNumQuestions(parseInt(e.target.value) || 5)}
-                             className="w-24"
-                           />
-                           <span className="text-sm text-gray-500">(1-20 questions)</span>
-                         </div>
-                       </div>
-                       
-                       <Button 
-                         onClick={handleGenerateQCM} 
-                         disabled={isGenerating}
-                         className="w-full bg-purple-600 hover:bg-purple-700"
-                       >
-                         {isGenerating ? (
-                           <>
-                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                             Génération en cours...
-                           </>
-                         ) : (
-                           'Générer QCM'
-                         )}
-                       </Button>
-                     </div>
-                   </div>
-                 )}
-                 
-                 {/* Choix de nouveau fichier */}
-                 <div className="mt-4">
-                   <Label htmlFor="pdf-upload-new" className="mb-2 block">Changer de fichier PDF :</Label>
-                   <div className="flex gap-2">
-                     <label htmlFor="pdf-upload-new" className="flex-1">
-                       <Button className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md flex items-center justify-center gap-2">
-                         <FileUp size={18} />
-                         Nouveau PDF
-                       </Button>
-                       <Input
-                         id="pdf-upload-new"
-                         type="file"
-                         accept=".pdf"
-                         className="hidden"
-                         onChange={handleFileChange}
-                       />
-                     </label>
-                     <Button 
-                       onClick={resetQuiz}
-                       className="bg-red-600 hover:bg-red-700"
-                     >
-                       Réinitialiser
-                     </Button>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           ) : (
-             /* Interface d'upload standard quand aucun PDF n'est sélectionné */
-             <div className="relative mt-12 mb-16">
-               {/* Upload box */}
-               <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center bg-white">
-                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                   <FileUp className="h-8 w-8 text-gray-500" />
-                 </div>
-                 <p className="text-lg mb-6">Cliquez pour télécharger, ou glissez votre PDF ici</p>
-                 <label htmlFor="pdf-upload">
-                   <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md flex items-center gap-2">
-                     <FileUp size={18} />
-                     Télécharger PDF
-                   </Button>
-                   <Input
-                     id="pdf-upload"
-                     ref={fileInputRef}
-                     type="file"
-                     accept=".pdf"
-                     className="hidden"
-                     onChange={handleFileChange}
-                   />
-                 </label>
-               </div>
+                      <RadioGroup
+                        value={userAnswers[question.id] || ''}
+                        onValueChange={(value) => handleAnswerChange(question.id, value)}
+                        disabled={showResults}
+                        className="space-y-3"
+                      >
+                        {question.choices.map((choice) => (
+                          <div 
+                            key={choice.id} 
+                            className={`flex items-center space-x-2 p-3 rounded-md ${
+                              showResults && choice.id === question.correct_answer_id
+                                ? 'bg-green-50'
+                                : showResults && userAnswers[question.id] === choice.id && choice.id !== question.correct_answer_id
+                                ? 'bg-red-50'
+                                : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <RadioGroupItem 
+                              value={choice.id} 
+                              id={`${question.id}-${choice.id}`}
+                            />
+                            <Label 
+                              htmlFor={`${question.id}-${choice.id}`}
+                              className={
+                                showResults
+                                  ? choice.id === question.correct_answer_id
+                                    ? 'text-green-600 font-medium'
+                                    : userAnswers[question.id] === choice.id
+                                    ? 'text-red-600 font-medium'
+                                    : ''
+                                  : ''
+                              }
+                            >
+                              {choice.text}
+                              {showResults && choice.id === question.correct_answer_id && (
+                                <CheckCircle className="inline-block ml-2 h-4 w-4 text-green-600" />
+                              )}
+                              {showResults && 
+                                userAnswers[question.id] === choice.id && 
+                                choice.id !== question.correct_answer_id && (
+                                <XCircle className="inline-block ml-2 h-4 w-4 text-red-600" />
+                              )}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                      
+                      {showResults && question.explanation && (
+                        <Alert className="mt-4 bg-blue-50 text-blue-800 border-blue-200">
+                          <AlertTitle>Explication</AlertTitle>
+                          <AlertDescription>{question.explanation}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-               {/* File info */}
-               {file && !pdfUrl && (
-                 <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-                   <div className="flex items-center">
-                     <FileText className="h-6 w-6 text-purple-600 mr-2" />
-                     <span className="text-sm font-medium">{file.name}</span>
-                   </div>
-                   
-                   {/* Upload button */}
-                   <div className="mt-4">
-                     <Button 
-                       onClick={handleUpload} 
-                       disabled={!file || isUploading}
-                       className="w-full bg-purple-600 hover:bg-purple-700"
-                     >
-                       {isUploading ? (
-                         <>
-                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                           Téléchargement...
-                         </>
-                       ) : (
-                         'Télécharger PDF'
-                       )}
-                     </Button>
-                   </div>
-                 </div>
-               )}
-
-               {/* Error message */}
-               {uploadError && (
-                 <Alert variant="destructive" className="mt-4">
-                   <XCircle className="h-4 w-4" />
-                   <AlertTitle>Erreur</AlertTitle>
-                   <AlertDescription>{uploadError}</AlertDescription>
-                 </Alert>
-               )}
-             </div>
-           )}
-         </div>
-       )}
-
-       {/* Quiz View - Answer QCM questions */}
-       {view === 'quiz' && qcmData && (
-         <div className="flex-1 flex flex-col">
-           {/* Quiz Header */}
-           <div className="border-b p-4 bg-white">
-             <div className="max-w-4xl mx-auto">
-               <h1 className="text-2xl font-bold">{qcmData.pdf_title}</h1>
-               <p className="text-gray-600">
-                 Répondez aux questions générées à partir de votre document
-               </p>
-             </div>
-           </div>
-
-           {/* Écran partagé pour le quiz */}
-           <div className="flex-1 flex">
-             {/* PDF Viewer - Left Side */}
-             {pdfUrl && (
-               <div className="w-1/2 border-r border-gray-300 p-4 overflow-auto">
-                 <h2 className="text-xl font-bold mb-4">Document de référence</h2>
-                 <div className="h-[calc(100%-40px)] bg-white rounded-lg border border-gray-200">
-                   <iframe
-                     src={pdfUrl}
-                     title="PDF Viewer"
-                     className="w-full h-full rounded-lg"
-                   />
-                 </div>
-               </div>
-             )}
-             
-             {/* Quiz Content - Right Side */}
-             <div className="flex-1 overflow-auto p-4">
-               <div className="max-w-4xl mx-auto">
-                 {/* Score display */}
-                 {showResults && (
-                   <div className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
-                     <h2 className="text-xl font-bold mb-2">Résultats</h2>
-                     <div className="flex justify-between items-center mb-2">
-                       <span className="text-sm font-medium">
-                         Score: {getScore()} / {qcmData.questions.length}
-                       </span>
-                       <span className="text-sm font-medium">
-                         {Math.round((getScore() / qcmData.questions.length) * 100)}%
-                       </span>
-                     </div>
-                     <Progress value={(getScore() / qcmData.questions.length) * 100} className="h-2" />
-                   </div>
-                 )}
-
-                 {/* Questions */}
-                 {qcmData.questions.map((question, index) => (
-                   <div key={question.id} className="mb-8 p-6 bg-white rounded-lg border border-gray-200">
-                     <div className="font-medium text-lg mb-4">
-                       Question {index + 1}: {question.text}
-                     </div>
-                     
-                     <RadioGroup
-                       value={userAnswers[question.id] || ''}
-                       onValueChange={(value) => handleAnswerChange(question.id, value)}
-                       disabled={showResults}
-                       className="space-y-3"
-                     >
-                       {question.choices.map((choice) => (
-                         <div 
-                           key={choice.id} 
-                           className={`flex items-center space-x-2 p-3 rounded-md ${
-                             showResults && choice.id === question.correct_answer_id
-                               ? 'bg-green-50'
-                               : showResults && userAnswers[question.id] === choice.id && choice.id !== question.correct_answer_id
-                               ? 'bg-red-50'
-                               : 'hover:bg-gray-50'
-                           }`}
-                         >
-                           <RadioGroupItem 
-                             value={choice.id} 
-                             id={`${question.id}-${choice.id}`}
-                           />
-                           <Label 
-                             htmlFor={`${question.id}-${choice.id}`}
-                             className={
-                               showResults
-                                 ? choice.id === question.correct_answer_id
-                                   ? 'text-green-600 font-medium'
-                                   : userAnswers[question.id] === choice.id
-                                   ? 'text-red-600 font-medium'
-                                   : ''
-                                 : ''
-                             }
-                           >
-                             {choice.text}
-                             {showResults && choice.id === question.correct_answer_id && (
-                               <CheckCircle className="inline-block ml-2 h-4 w-4 text-green-600" />
-                             )}
-                             {showResults && 
-                               userAnswers[question.id] === choice.id && 
-                               choice.id !== question.correct_answer_id && (
-                               <XCircle className="inline-block ml-2 h-4 w-4 text-red-600" />
-                             )}
-                           </Label>
-                         </div>
-                       ))}
-                     </RadioGroup>
-                     
-                     {showResults && question.explanation && (
-                       <Alert className="mt-4 bg-blue-50 text-blue-800 border-blue-200">
-                         <AlertTitle>Explication</AlertTitle>
-                         <AlertDescription>{question.explanation}</AlertDescription>
-                       </Alert>
-                     )}
-                   </div>
-                 ))}
-               </div>
-             </div>
-           </div>
-
-           {/* Quiz Footer */}
-           <div className="border-t p-4 bg-white">
-             <div className="max-w-4xl mx-auto">
-               {!showResults ? (
-                 <Button 
-                   onClick={handleSubmitQuiz} 
-                   disabled={Object.keys(userAnswers).length !== qcmData.questions.length}
-                   className="w-full bg-purple-600 hover:bg-purple-700"
-                 >
-                   Soumettre les réponses
-                 </Button>
-               ) : (
-                 <Button 
-                   onClick={resetQuiz} 
-                   variant="outline"
-                   className="w-full"
-                 >
-                   Nouveau QCM
-                 </Button>
-               )}
-             </div>
-           </div>
-         </div>
-       )}
-     </div>
-   </div>
- );
+            {/* Quiz Footer */}
+            <div className="border-t p-4 bg-white">
+              <div className="max-w-4xl mx-auto">
+                {!showResults ? (
+                  <Button 
+                    onClick={handleSubmitQuiz} 
+                    disabled={Object.keys(userAnswers).length !== qcmData.questions.length}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    Soumettre les réponses
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={resetQuiz} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Nouveau QCM
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 // Interface pour les props de App
@@ -1035,7 +869,7 @@ function App({ page }: AppProps) {
   }
   
   // Sinon, afficher la page demandée
-  if (page === 'upload') {
+  if (page === 'upload-pdf') {
     return <PdfUploadPage />;
   }
   

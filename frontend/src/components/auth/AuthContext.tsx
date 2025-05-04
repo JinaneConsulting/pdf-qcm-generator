@@ -2,9 +2,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { API_URL, BASIC_AUTH } from '../../config';
 
-// Constante pour l'email administrateur
-const ADMIN_EMAIL = 'jchraa@jinane-consulting.com';
-
 interface User {
   id: string;
   email: string;
@@ -46,7 +43,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [token, setTokenState] = useState<string | null>(localStorage.getItem('token') || localStorage.getItem('auth_token'));
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  
+  // Utiliser is_superuser au lieu de comparer l'email
+  const isAdmin = user?.is_superuser || false;
 
   // Fonction pour définir le token et le stocker dans localStorage
   const setToken = (newToken: string | null) => {
@@ -86,6 +85,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     
         const userData = await response.json();
         console.log("User data fetched successfully:", userData);
+        console.log("is_superuser value:", userData.is_superuser);
+        console.log("email:", userData.email);
         setUser(userData);
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -196,6 +197,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     </AuthContext.Provider>
   );
 };
+
+
 
 // Exporter le contexte, le hook et le provider
 export { AuthContext, AuthProvider, useAuth };

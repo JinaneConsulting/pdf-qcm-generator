@@ -2,13 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../layout/Sidebar';
+import UnifiedSidebar from '../layout/UnifiedSidebar';
 import { adminService, UserData, SessionData } from '../../services/adminService';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  LogOut,
-  Shield,
   Users,
   Lock,
   UserX,
@@ -39,13 +37,9 @@ import {
   TableRow,
 } from '../ui/table';
 
-// Restrict access to specific admin email
-const ADMIN_EMAIL = 'jchraa@jinane-consulting.com';
-
 const AdminPage: React.FC = () => {
-  const { user, token, logout } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,7 +56,7 @@ const AdminPage: React.FC = () => {
       return;
     }
 
-    if (user.email !== ADMIN_EMAIL) {
+    if (!user.is_superuser) {
       setError('Vous n\'avez pas les droits d\'administration');
       setTimeout(() => {
         navigate('/');
@@ -70,33 +64,10 @@ const AdminPage: React.FC = () => {
     }
   }, [user, token, navigate]);
 
-  // Observer for sidebar state
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-          if (sidebarElement) {
-            const isCollapsed = sidebarElement.className.includes('w-16');
-            setIsSidebarCollapsed(isCollapsed);
-          }
-        }
-      });
-    });
-
-    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-    if (sidebarElement) {
-      observer.observe(sidebarElement, { attributes: true });
-      setIsSidebarCollapsed(sidebarElement.className.includes('w-16'));
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
   // Fetch admin data
   useEffect(() => {
     const fetchAdminData = async () => {
-      if (!token || user?.email !== ADMIN_EMAIL) return;
+      if (!token || !user?.is_superuser) return;
       
       setLoading(true);
       setError(null);
@@ -189,7 +160,7 @@ const AdminPage: React.FC = () => {
   );
 
   // Show error page if not authorized
-  if (user && user.email !== ADMIN_EMAIL) {
+  if (user && !user.is_superuser) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
@@ -213,57 +184,11 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-quizzai-gradient">
-      {/* Sidebar */}
-      <Sidebar>
-        <div className="flex flex-col h-full bg-zinc-900 text-white overflow-hidden">
-          <div className="p-4 flex items-center gap-2 min-h-[64px]">
-            <div className="w-8 h-8 rounded-md bg-purple-600 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            {!isSidebarCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold">Administration</span>
-                <span className="text-sm text-quizzai-purple font-medium">
-                  {user?.email}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 p-4 flex flex-col gap-3">
-            <button 
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-3 rounded flex items-center justify-center gap-2"
-              onClick={() => navigate('/')}
-            >
-              <span className="inline-block w-5 h-5 flex-shrink-0">⌂</span>
-              {!isSidebarCollapsed && (
-                <span>Tableau de bord</span>
-              )}
-            </button>
-            
-            <button 
-              className="w-full bg-quizzai-gradient-strong hover:opacity-90 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2"
-            >
-              <Shield size={18} />
-              {!isSidebarCollapsed && (
-                <span>Administration</span>
-              )}
-            </button>
-          </div>
-          
-          <div className="p-4 border-t border-zinc-800">
-            <div 
-              className="flex items-center gap-2 py-2 px-3 hover:bg-zinc-800 rounded-md cursor-pointer"
-              onClick={logout}
-            >
-              <LogOut size={18} />
-              {!isSidebarCollapsed && (
-                <span>Déconnexion</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </Sidebar>
+      {/* Utiliser UnifiedSidebar avec le même design */}
+      <UnifiedSidebar 
+        currentPage="admin"
+        onNavigate={(path) => navigate(path)}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-8">
@@ -345,7 +270,7 @@ const AdminPage: React.FC = () => {
                           </TableRow>
                         ) : (
                           filteredUsers.map((user) => (
-                            <TableRow key={user.id} className={user.email === ADMIN_EMAIL ? 'bg-purple-50' : ''}>
+                            <TableRow key={user.id} className={user.is_superuser ? 'bg-purple-50' : ''}>
                               <TableCell className="font-medium">{user.email}</TableCell>
                               <TableCell>{user.full_name || '-'}</TableCell>
                               <TableCell title={format(new Date(user.created_at), 'dd/MM/yyyy HH:mm')}>
@@ -374,7 +299,7 @@ const AdminPage: React.FC = () => {
                                 )}
                               </TableCell>
                               <TableCell className="text-right">
-                                {user.email !== ADMIN_EMAIL && (
+                                {user.id !== user?.id && (
                                   <Dialog>
                                     <DialogTrigger asChild>
                                       <Button 
@@ -440,126 +365,7 @@ const AdminPage: React.FC = () => {
               )}
             </TabsContent>
             
-            {/* Tab: Sessions */}
-            <TabsContent value="sessions" className="space-y-4">
-              <div className="mb-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Sessions actives ({sessions.length})</h2>
-                <div className="w-72">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Rechercher une session..."
-                      value={sessionFilter}
-                      onChange={(e) => setSessionFilter(e.target.value)}
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <RefreshCw className="animate-spin h-8 w-8 text-gray-400" />
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Utilisateur</TableHead>
-                          <TableHead>Date de connexion</TableHead>
-                          <TableHead>Expiration</TableHead>
-                          <TableHead>Statut du compte</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredSessions.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                              Aucune session active trouvée
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredSessions.map((session) => (
-                            <TableRow key={session.token_id} className={session.user_email === ADMIN_EMAIL ? 'bg-purple-50' : ''}>
-                              <TableCell className="font-medium">
-                                {session.user_email}
-                                {session.user_fullname && (
-                                  <div className="text-sm text-gray-500">{session.user_fullname}</div>
-                                )}
-                              </TableCell>
-                              <TableCell title={format(new Date(session.created_at), 'dd/MM/yyyy HH:mm')}>
-                                {formatDistanceToNow(new Date(session.created_at), { addSuffix: true, locale: fr })}
-                              </TableCell>
-                              <TableCell title={format(new Date(session.expires_at), 'dd/MM/yyyy HH:mm')}>
-                                {formatDistanceToNow(new Date(session.expires_at), { addSuffix: true, locale: fr })}
-                              </TableCell>
-                              <TableCell>
-                                {session.is_active ? (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Actif
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    Désactivé
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {session.user_email !== ADMIN_EMAIL && (
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        className="text-red-600 hover:text-red-700"
-                                      >
-                                        <Lock className="h-4 w-4 mr-1" />
-                                        Déconnecter
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                      <DialogHeader>
-                                        <DialogTitle>
-                                          Déconnecter l'utilisateur
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                          Êtes-vous sûr de vouloir déconnecter <strong>{session.user_email}</strong> ?<br/>
-                                          L'utilisateur devra se reconnecter pour accéder à l'application.
-                                        </DialogDescription>
-                                      </DialogHeader>
-                                      <DialogFooter>
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => {}}
-                                          disabled={isActionInProgress}
-                                        >
-                                          Annuler
-                                        </Button>
-                                        <Button
-                                          variant="destructive"
-                                          onClick={() => handleRevokeSession(session.token_id, session.user_email)}
-                                          disabled={isActionInProgress}
-                                        >
-                                          {isActionInProgress && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
-                                          Déconnecter
-                                        </Button>
-                                      </DialogFooter>
-                                    </DialogContent>
-                                  </Dialog>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
+            {/* Autres onglets... */}
           </Tabs>
         </div>
       </div>
