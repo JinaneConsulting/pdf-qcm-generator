@@ -5,12 +5,13 @@ import { API_URL, getAuthHeaders } from '../config';
 export interface UserData {
   id: number;
   email: string;
-  full_name: string | null;
-  is_active: boolean;
+  full_name?: string | null;
+  profile_picture?: string | null;
   is_verified: boolean;
+  is_superuser: boolean;
+  is_active: boolean;
   created_at: string;
-  login_type: 'oauth' | 'password';
-  profile_picture: string | null;
+  login_type: string;
 }
 
 export interface SessionData {

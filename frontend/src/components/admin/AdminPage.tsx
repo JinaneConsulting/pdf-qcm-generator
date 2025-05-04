@@ -3,12 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import UnifiedSidebar from '../layout/UnifiedSidebar';
-import { adminService, UserData, SessionData } from '../../services/adminService';
+import { adminService, UserData } from '../../services/adminService';  // Importez UserData du service
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Users,
-  Lock,
   UserX,
   UserCheck,
   RefreshCw,
@@ -37,15 +36,15 @@ import {
   TableRow,
 } from '../ui/table';
 
+// Supprimez complètement l'interface UserData locale
+
 const AdminPage: React.FC = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
-  const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState<string>('');
-  const [sessionFilter, setSessionFilter] = useState<string>('');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [isActionInProgress, setIsActionInProgress] = useState<boolean>(false);
 
@@ -73,14 +72,14 @@ const AdminPage: React.FC = () => {
       setError(null);
       
       try {
-        // Fetch users and sessions in parallel
-        const [usersResponse, sessionsResponse] = await Promise.all([
-          adminService.getUsers(token),
-          adminService.getSessions(token)
-        ]);
+        const usersResponse = await adminService.getUsers(token);
         
-        setUsers(usersResponse.users || []);
-        setSessions(sessionsResponse.sessions || []);
+        // Vérifier que la réponse contient des utilisateurs
+        if (usersResponse && usersResponse.users) {
+          setUsers(usersResponse.users);
+        } else {
+          setUsers([]);
+        }
       } catch (err) {
         console.error('Error fetching admin data:', err);
         setError((err as Error).message || 'Erreur lors de la récupération des données d\'administration');
@@ -92,30 +91,11 @@ const AdminPage: React.FC = () => {
     fetchAdminData();
   }, [token, user, refreshTrigger]);
 
-  // Handle data refresh
+  // Rest of the component remains exactly the same...
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  // Handle session revocation (logout user)
-  const handleRevokeSession = async (sessionId: number, userEmail: string) => {
-    if (!token) return;
-    
-    setIsActionInProgress(true);
-    try {
-      await adminService.revokeSession(token, sessionId);
-      setSessions(prev => prev.filter(session => session.token_id !== sessionId));
-      // Show success message
-      setError(`Session de ${userEmail} révoquée avec succès`);
-      setTimeout(() => setError(null), 3000);
-    } catch (err) {
-      setError((err as Error).message || 'Erreur lors de la révocation de la session');
-    } finally {
-      setIsActionInProgress(false);
-    }
-  };
-
-  // Handle user account activation/deactivation
   const handleToggleUserActive = async (userId: number, isActive: boolean, userEmail: string) => {
     if (!token) return;
     
@@ -127,17 +107,10 @@ const AdminPage: React.FC = () => {
         await adminService.enableUser(token, userId);
       }
       
-      // Update local user data
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, is_active: !isActive } : user
       ));
       
-      // Update sessions data if user is deactivated
-      if (isActive) {
-        setSessions(prev => prev.filter(session => session.user_id !== userId));
-      }
-      
-      // Show success message
       setError(`Compte de ${userEmail} ${isActive ? 'désactivé' : 'activé'} avec succès`);
       setTimeout(() => setError(null), 3000);
     } catch (err) {
@@ -147,16 +120,9 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Filter users based on search input
   const filteredUsers = users.filter(user => 
     user.email.toLowerCase().includes(userFilter.toLowerCase()) ||
     (user.full_name && user.full_name.toLowerCase().includes(userFilter.toLowerCase()))
-  );
-
-  // Filter sessions based on search input
-  const filteredSessions = sessions.filter(session => 
-    session.user_email.toLowerCase().includes(sessionFilter.toLowerCase()) ||
-    (session.user_fullname && session.user_fullname.toLowerCase().includes(sessionFilter.toLowerCase()))
   );
 
   // Show error page if not authorized
@@ -184,7 +150,6 @@ const AdminPage: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-quizzai-gradient">
-      {/* Utiliser UnifiedSidebar avec le même design */}
       <UnifiedSidebar 
         currentPage="admin"
         onNavigate={(path) => navigate(path)}
@@ -219,10 +184,6 @@ const AdminPage: React.FC = () => {
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users size={16} />
                 Utilisateurs
-              </TabsTrigger>
-              <TabsTrigger value="sessions" className="flex items-center gap-2">
-                <Lock size={16} />
-                Sessions
               </TabsTrigger>
             </TabsList>
             
@@ -364,8 +325,6 @@ const AdminPage: React.FC = () => {
                 </div>
               )}
             </TabsContent>
-            
-            {/* Autres onglets... */}
           </Tabs>
         </div>
       </div>

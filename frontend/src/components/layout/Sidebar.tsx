@@ -1,7 +1,6 @@
-// src/components/layout/Sidebar.tsx
 import React, { useState } from 'react';
 import { PanelLeftClose, PanelRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils'; 
 
 interface SidebarProps {
   children?: React.ReactNode;
