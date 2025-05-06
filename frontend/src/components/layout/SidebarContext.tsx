@@ -9,31 +9,80 @@ interface SidebarContextType {
 // Exporter le contexte pour qu'il soit accessible depuis context-hooks.ts
 export const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-export const SidebarProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   // Observer pour détecter l'état de la sidebar au chargement initial
   useEffect(() => {
+    // Fonction sécurisée pour vérifier si un élément contient une classe CSS spécifique
+    const checkClassPresence = (element: Element | null, classToCheck: string): boolean => {
+      if (!element) return true; // Par défaut, considérer comme collapsed
+
+      // Pour les éléments DOM standard
+      if (typeof element.className === 'string') {
+        return element.className.indexOf(classToCheck) >= 0;
+      }
+
+      // Pour les éléments SVG (qui ont SVGAnimatedString)
+      // On utilise une vérification plus sûre pour TypeScript
+      try {
+        // @ts-ignore - Nous savons que c'est potentiellement un SVGAnimatedString
+        const baseVal = element.className.baseVal;
+        if (typeof baseVal === 'string') {
+          return baseVal.indexOf(classToCheck) >= 0;
+        }
+      } catch (e) {
+        console.error("Erreur lors de la vérification de la classe:", e);
+      }
+
+      // Par défaut
+      return true;
+    };
+
+    const checkSidebarState = () => {
+      try {
+        const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
+        if (sidebarElement) {
+          const detected = checkClassPresence(sidebarElement, 'w-16');
+          setIsCollapsed(detected);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de l'état de la sidebar:", error);
+      }
+    };
+
+    // Vérifier l'état initial avec un délai
+    const initTimeout = setTimeout(() => {
+      checkSidebarState();
+    }, 100);
+
+    // Observer pour suivre les changements
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-          if (sidebarElement) {
-            const detected = sidebarElement.className.includes('w-16');
-            setIsCollapsed(detected);
-          }
+          checkSidebarState();
         }
       });
     });
 
-    const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
-    if (sidebarElement) {
-      observer.observe(sidebarElement, { attributes: true });
-      // État initial
-      setIsCollapsed(sidebarElement.className.includes('w-16'));
-    }
+    // Appliquer l'observer après un délai
+    const attachObserver = setTimeout(() => {
+      try {
+        const sidebarElement = document.querySelector('[class*="w-16"], [class*="w-72"]');
+        if (sidebarElement) {
+          observer.observe(sidebarElement, { attributes: true });
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'attachement de l'observer:", error);
+      }
+    }, 200);
 
-    return () => observer.disconnect();
+    // Nettoyer
+    return () => {
+      clearTimeout(initTimeout);
+      clearTimeout(attachObserver);
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -43,8 +92,6 @@ export const SidebarProvider: React.FC<{children: ReactNode}> = ({ children }) =
   );
 };
 
-// NOTE: Move this to a separate file to fix the warning:
-// src/hooks/use-sidebar.ts
 // eslint-disable-next-line react-refresh/only-export-components
 export const useSidebar = () => {
   const context = useContext(SidebarContext);

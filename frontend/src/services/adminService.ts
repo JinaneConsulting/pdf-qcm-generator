@@ -32,7 +32,6 @@ export interface AdminResponse {
   sessions?: SessionData[];
 }
 
-
 // Interface spécifique pour la réponse des utilisateurs
 export interface UsersResponse extends AdminResponse {
   users?: UserData[];
@@ -76,7 +75,7 @@ export const adminService = {
   },
 
   // Révoquer une session (déconnecter un utilisateur)
-  async revokeSession(token: string, sessionId: number): Promise<{success: boolean; message: string}> {
+  async revokeSession(token: string, sessionId: number): Promise<{ success: boolean; message: string }> {
     const response = await fetch(`${API_URL}/admin/sessions/${sessionId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(token)
@@ -91,7 +90,7 @@ export const adminService = {
   },
 
   // Désactiver un compte utilisateur
-  async disableUser(token: string, userId: number): Promise<{success: boolean; message: string}> {
+  async disableUser(token: string, userId: number): Promise<{ success: boolean; message: string }> {
     const response = await fetch(`${API_URL}/admin/users/${userId}/disable`, {
       method: 'POST',
       headers: getAuthHeaders(token)
@@ -106,7 +105,7 @@ export const adminService = {
   },
 
   // Activer un compte utilisateur
-  async enableUser(token: string, userId: number): Promise<{success: boolean; message: string}> {
+  async enableUser(token: string, userId: number): Promise<{ success: boolean; message: string }> {
     const response = await fetch(`${API_URL}/admin/users/${userId}/enable`, {
       method: 'POST',
       headers: getAuthHeaders(token)

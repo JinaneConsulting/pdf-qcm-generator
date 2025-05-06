@@ -14,15 +14,12 @@ logger = logging.getLogger(__name__)
 # Création du router pour les opérations d'administration
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-# Adresse email de l'administrateur
-ADMIN_EMAIL = "jchraa@jinane-consulting.com"
-
 # Middleware pour vérifier les droits d'administration
 async def check_admin_rights(
     request: Request,
     session: AsyncSession = Depends(get_async_session)
 ):
-    """Vérifie que l'utilisateur a les droits d'administration"""
+    """Vérifie que l'utilisateur a les droits d'administration en utilisant is_superuser"""
     user, error = await get_current_user(request, session)
     
     if error:
@@ -32,7 +29,8 @@ async def check_admin_rights(
             headers={"WWW-Authenticate": "Bearer"}
         )
     
-    if user.email != ADMIN_EMAIL:
+    # Vérifier si l'utilisateur est un superutilisateur au lieu de vérifier un email spécifique
+    if not user.is_superuser:
         logger.warning(f"Tentative d'accès admin non autorisée par {user.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -67,9 +65,10 @@ async def get_users(
                 "is_active": user.is_active,
                 "is_verified": user.is_verified,
                 "created_at": user.created_at.isoformat(),
-                "last_login": None,  # To be implemented if tracking is needed
+                "last_login": user.last_login.isoformat() if user.last_login else None,
                 "login_type": "oauth" if user.is_oauth_user() else "password",
-                "profile_picture": user.profile_picture
+                "profile_picture": user.profile_picture,
+                "is_superuser": user.is_superuser
             }
             for user in users
         ]
@@ -213,4 +212,70 @@ async def enable_user(
     return {
         "success": True,
         "message": f"Compte de {user.email} réactivé avec succès"
+    }
+
+# Routes pour la gestion des droits d'administration
+@router.post("/users/{user_id}/make-admin")
+async def make_user_admin(
+    user_id: int,
+    request: Request,
+    admin: User = Depends(check_admin_rights),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Donne les droits d'administrateur à un utilisateur"""
+    # Récupérer l'utilisateur
+    user = await session.get(User, user_id)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Mettre à jour les droits
+    user.is_superuser = True
+    session.add(user)
+    await session.commit()
+    
+    logger.info(f"Admin {admin.email} a promu {user.email} au rang d'administrateur")
+    
+    return {
+        "success": True,
+        "message": f"{user.email} est maintenant administrateur"
+    }
+
+@router.post("/users/{user_id}/remove-admin")
+async def remove_user_admin(
+    user_id: int,
+    request: Request,
+    admin: User = Depends(check_admin_rights),
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Retire les droits d'administrateur à un utilisateur"""
+    # Empêcher de retirer ses propres droits
+    if user_id == admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vous ne pouvez pas retirer vos propres droits d'administrateur"
+        )
+    
+    # Récupérer l'utilisateur
+    user = await session.get(User, user_id)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Mettre à jour les droits
+    user.is_superuser = False
+    session.add(user)
+    await session.commit()
+    
+    logger.info(f"Admin {admin.email} a retiré les droits d'administrateur de {user.email}")
+    
+    return {
+        "success": True,
+        "message": f"Les droits d'administrateur ont été retirés à {user.email}"
     }

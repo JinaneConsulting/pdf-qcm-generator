@@ -27,6 +27,7 @@ class GoogleOAuthProvider(AuthProvider):
         """
         Récupère le token OAuth et les informations utilisateur
         """
+        logger.info(f"Démarrage de l'échange OAuth - Code reçu: {code[:5]}...")
         if not code:
             return None, "Code OAuth manquant"
         
@@ -46,6 +47,7 @@ class GoogleOAuthProvider(AuthProvider):
             logger.error(f"Erreur lors de l'authentification Google: {str(e)}")
             return None, f"Erreur d'authentification Google: {str(e)}"
     
+    # Dans google_provider.py, modifiez la méthode _exchange_code_for_token
     async def _exchange_code_for_token(self, code: str, redirect_uri: str) -> Optional[Dict[str, Any]]:
         """
         Échange un code d'autorisation contre un token d'accès
@@ -59,13 +61,21 @@ class GoogleOAuthProvider(AuthProvider):
             "grant_type": "authorization_code"
         }
         
-        async with httpx.AsyncClient() as client:
-            response = await client.post(token_url, data=data)
-            if response.status_code != 200:
-                logger.error(f"Erreur d'échange de code: {response.text}")
-                return None
-            
-            return response.json()
+        logger.debug(f"Échange de code: URL={token_url}, redirect_uri={redirect_uri}")
+        logger.debug(f"Client ID présent: {'Oui' if GOOGLE_CLIENT_ID else 'Non'}")
+        
+        try:
+            # Augmentez le timeout à 30 secondes
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(token_url, data=data)
+                if response.status_code != 200:
+                    logger.error(f"Erreur d'échange de code: Status={response.status_code}, Réponse={response.text}")
+                    return None
+                
+                return response.json()
+        except Exception as e:
+            logger.error(f"Exception lors de l'échange de code: {type(e).__name__}: {str(e)}")
+            return None
     
     async def _get_user_info(self, access_token: str) -> Optional[Dict[str, Any]]:
         """

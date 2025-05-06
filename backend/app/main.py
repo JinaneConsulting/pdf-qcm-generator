@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 # Configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+# Dans main.py, après load_dotenv()
+logger.info(f"GOOGLE_CLIENT_ID présent: {'Oui' if os.environ.get('GOOGLE_CLIENT_ID') else 'Non'}")
+logger.info(f"GOOGLE_CLIENT_SECRET présent: {'Oui' if os.environ.get('GOOGLE_CLIENT_SECRET') else 'Non'}")
+
 # Application FastAPI
 app = FastAPI()
 

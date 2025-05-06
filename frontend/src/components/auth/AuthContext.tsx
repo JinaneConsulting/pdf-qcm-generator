@@ -17,6 +17,7 @@ interface AuthContextType {
   token: string | null;
   setToken: (token: string | null) => void;
   isLoading: boolean;
+  isInitialized: boolean; // Nouvel état pour indiquer si l'initialisation est terminée
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -41,16 +42,17 @@ const useAuth = () => {
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setTokenState] = useState<string | null>(localStorage.getItem('token') || localStorage.getItem('auth_token'));
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Commence par true
+  const [isInitialized, setIsInitialized] = useState<boolean>(false); // Nouvel état
   const [error, setError] = useState<string | null>(null);
-  
+
   // Utiliser is_superuser au lieu de comparer l'email
   const isAdmin = user?.is_superuser || false;
 
   // Fonction pour définir le token et le stocker dans localStorage
   const setToken = (newToken: string | null) => {
     console.log("Setting token:", newToken ? newToken.substring(0, 10) + "..." : "null");
-    
+
     if (newToken) {
       localStorage.setItem('token', newToken);
       localStorage.setItem('auth_token', newToken); // Pour compatibilité
@@ -58,18 +60,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       localStorage.removeItem('token');
       localStorage.removeItem('auth_token');
     }
-    
+
     setTokenState(newToken);
   };
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (!token) return;
-    
+      if (!token) {
+        setIsLoading(false);
+        setIsInitialized(true);
+        return;
+      }
+
       try {
         setIsLoading(true);
         console.log("Fetching user with token:", token.substring(0, 10) + "...");
-        
+
         const response = await fetch(`${API_URL}/custom/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -77,12 +83,12 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             'Authorization-Tunnel': BASIC_AUTH
           }
         });
-    
+
         if (!response.ok) {
           console.error("Failed to fetch user:", response.status, response.statusText);
           throw new Error('Session expirée, veuillez vous reconnecter');
         }
-    
+
         const userData = await response.json();
         console.log("User data fetched successfully:", userData);
         console.log("is_superuser value:", userData.is_superuser);
@@ -93,10 +99,18 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         setError((error as Error).message);
         logout();
       } finally {
+        // Marquer le chargement comme terminé et l'initialisation comme complète
         setIsLoading(false);
+        setIsInitialized(true);
       }
     };
-    
+
+    // Si nous avons déjà le user et qu'il est initialisé, mettre fin au chargement
+    if (user && isInitialized) {
+      setIsLoading(false);
+      return;
+    }
+
     fetchUser();
   }, [token]);
 
@@ -104,7 +118,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     try {
       setIsLoading(true);
       setError(null);
-  
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -117,7 +131,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           password: password,
         }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Identifiants invalides');
@@ -137,7 +151,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     try {
       setIsLoading(true);
       setError(null);
-  
+
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -150,7 +164,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           password,
         }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Erreur lors de l\'inscription');
@@ -181,6 +195,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       token,
       setToken,
       isLoading,
+      isInitialized, // Exposer l'état d'initialisation
       error,
       login,
       register,
@@ -188,7 +203,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       clearError,
       isAdmin
     }),
-    [user, token, isLoading, error, isAdmin]
+    [user, token, isLoading, isInitialized, error, isAdmin]
   );
 
   return (
@@ -197,8 +212,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     </AuthContext.Provider>
   );
 };
-
-
 
 // Exporter le contexte, le hook et le provider
 export { AuthContext, AuthProvider, useAuth };

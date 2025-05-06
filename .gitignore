@@ -37,6 +37,10 @@ virtualenv/
 **/.env/
 **/virtualenv/
 python?-venv/
+mon_env/
+.mon_env/
+**/mon_env/
+
 
 # Cache Python
 __pycache__/
