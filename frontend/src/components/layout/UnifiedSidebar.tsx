@@ -86,11 +86,22 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({ children, currentPage =
     };
   }, []);
 
+  // Fonction de gestion du clic sur le logo
+  const handleLogoClick = () => {
+    // Si l'utilisateur est connecté, diriger vers la page d'accueil
+    // Sinon, diriger vers la page de connexion
+    onNavigate?.(user ? '/' : '/login');
+  };
+
   return (
     <Sidebar>
       <div className="flex flex-col h-full bg-blue-50 text-blue-600 border-r border-blue-100 overflow-hidden">
-        {/* Logo - Identique pour tous les états */}
-        <div className="p-4 flex items-center gap-2 min-h-[64px]">
+        {/* Logo - Rendu cliquable */}
+        <div 
+          className="p-4 flex items-center gap-2 min-h-[64px] cursor-pointer hover:bg-blue-100 transition-colors"
+          onClick={handleLogoClick}
+          title={user ? "Aller au tableau de bord" : "Se connecter"}
+        >
           <div className="h-10 flex items-center justify-center">
             <img
               src={quizzaiLogo}

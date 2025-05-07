@@ -1,3 +1,4 @@
+# app/auth/auth_routes.py - Version améliorée
 import os
 import logging
 from typing import Dict, Optional
@@ -80,6 +81,35 @@ async def register(
         )
     
     return result
+
+@router.post("/logout")
+async def logout(
+    request: Request,
+    response: Response,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """Déconnexion en révoquant le token"""
+    # Récupérer le token depuis l'en-tête Authorization
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or "Bearer " not in auth_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token d'authentification manquant",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    token = auth_header.replace("Bearer ", "")
+    
+    # Révoquer le token
+    success = await auth_service.logout(token, session)
+    
+    # Supprimer le cookie côté client
+    response.delete_cookie("auth_token")
+    
+    if not success:
+        return {"message": "Session déjà expirée ou invalide"}
+    
+    return {"message": "Déconnecté avec succès"}
 
 @router.post("/verify")
 async def verify_email(
@@ -210,8 +240,136 @@ async def google_callback(
     
     return response
 
-@router.post("/logout")
-async def logout(response: Response):
-    """Déconnexion (suppression du cookie)"""
-    response.delete_cookie("auth_token")
-    return {"message": "Déconnecté avec succès"}
+@router.get("/sessions/active")
+async def get_active_sessions(
+    request: Request,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Récupère toutes les sessions actives de l'utilisateur authentifié
+    """
+    # Récupérer l'utilisateur à partir du token dans l'en-tête
+    user, error = await auth_service.get_user_from_token(get_token_from_request(request), session)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=error,
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    from sqlalchemy import select
+    from app.models.user_model import AccessToken
+    
+    # Récupérer toutes les sessions de l'utilisateur
+    query = select(AccessToken).where(
+        AccessToken.user_id == user.id,
+        AccessToken.is_valid == True
+    ).order_by(AccessToken.created_at.desc())
+    
+    result = await session.execute(query)
+    sessions = result.scalars().all()
+    
+    # Formater les sessions pour la réponse
+    return {
+        "count": len(sessions),
+        "sessions": [
+            {
+                "id": token.id,
+                "created_at": token.created_at.isoformat(),
+                "expires_at": token.expires_at.isoformat(),
+                "ip_address": token.ip_address,
+                "user_agent": token.user_agent,
+                "current": token.token == get_token_from_request(request)
+            }
+            for token in sessions
+        ]
+    }
+
+@router.delete("/sessions/{session_id}")
+async def revoke_session(
+    session_id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_async_session)
+):
+    """
+    Révoque une session spécifique de l'utilisateur authentifié
+    """
+    # Récupérer l'utilisateur à partir du token dans l'en-tête
+    user, error = await auth_service.get_user_from_token(get_token_from_request(request), session)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=error,
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    from app.models.user_model import AccessToken
+    
+    # Récupérer la session spécifiée
+    token = await session.get(AccessToken, session_id)
+    
+    # Vérifier que la session existe et appartient à l'utilisateur
+    if not token or token.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session non trouvée"
+        )
+    
+    # Si c'est la session courante, retourner une erreur
+    if token.token == get_token_from_request(request):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vous ne pouvez pas révoquer votre session courante. Utilisez /auth/logout à la place."
+        )
+    
+    # Supprimer la session
+    await session.delete(token)
+    await session.commit()
+    
+    return {"message": "Session révoquée avec succès"}
+
+@router.delete("/sessions/all")
+async def revoke_all_sessions(
+    request: Request,
+    session: AsyncSession = Depends(get_async_session),
+    keep_current: bool = Query(True, description="Garder la session courante")
+):
+    """
+    Révoque toutes les sessions de l'utilisateur authentifié sauf la session courante (optionnel)
+    """
+    # Récupérer l'utilisateur à partir du token dans l'en-tête
+    current_token = get_token_from_request(request)
+    user, error = await auth_service.get_user_from_token(current_token, session)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=error,
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    from sqlalchemy import select, delete
+    from app.models.user_model import AccessToken
+    
+    # Créer la requête de suppression
+    delete_query = delete(AccessToken).where(AccessToken.user_id == user.id)
+    
+    if not user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs"
+        )
+    
+    from sqlalchemy import delete
+    from app.models.user_model import AccessToken
+    from datetime import datetime
+    
+    # Supprimer les tokens expirés
+    query = delete(AccessToken).where(AccessToken.expires_at < datetime.utcnow())
+    result = await session.execute(query)
+    count = result.rowcount
+    await session.commit()
+    
+    return {
+        "message": f"{count} tokens expirés supprimés",
+        "count": count
+    }
