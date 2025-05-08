@@ -8,6 +8,7 @@ import App from './App.tsx'
 import { AuthProvider } from './components/auth/AuthContext'
 import AdminPage from './components/admin/AdminPage.tsx'
 import { SidebarProvider } from './components/layout/SidebarContext';
+import FoldersPage from './components/folders/FoldersPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/auth/google/callback" element={<App page="google-callback" />} />
           <Route path="/auth/callback" element={<App page="callback" />} />
           <Route path="/auth/error" element={<App page="error" />} />
+          <Route path="/folders" element={<FoldersPage />} />
         </Routes>
       </SidebarProvider>
       </AuthProvider>

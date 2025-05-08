@@ -1,6 +1,6 @@
 import UnifiedSidebar from './components/layout/UnifiedSidebar';
 import { useState, useRef, useEffect } from 'react';
-import { FileUp, Loader2, FileText, CheckCircle, XCircle, Upload, Shield, UserRound } from 'lucide-react';
+import { FileUp, Loader2, FileText, CheckCircle, XCircle, Upload, Shield, UserRound, Folder } from 'lucide-react';
 import './App.css';
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
@@ -14,6 +14,7 @@ import AuthCallback from './components/auth/AuthCallback';
 import GoogleAuthCallback from './components/auth/GoogleAuthCallback';
 import OAuthErrorPage from './components/auth/OAuthErrorPage';
 import ProfilePage from './components/user/ProfilePage';
+
 
 // Définir les types
 interface Question {
@@ -462,6 +463,10 @@ const QCMApp: React.FC = () => {
       window.location.href = '/upload-pdf';
     } else if (path === '/profile') {
       window.location.href = '/profile';
+    } else if (path === '/folders') {
+      window.location.href = '/folders'; // Ajoutez cette condition
+    } else if (path === '/admin') {
+      window.location.href = '/admin';
     } else if (path === '/') {
       resetQuiz();
     }
@@ -485,6 +490,20 @@ const QCMApp: React.FC = () => {
               <h3 className="text-xl font-semibold text-center mb-2">Télécharger un PDF</h3>
               <p className="text-gray-600 text-center">
                 Importez vos documents pour créer des questionnaires
+              </p>
+            </div>
+
+            {/* Nouvelle carte Dossiers */}
+            <div 
+              onClick={() => window.location.href = '/folders'}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4 mx-auto">
+                <Folder className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-2">Mes Dossiers</h3>
+              <p className="text-gray-600 text-center">
+                Organisez vos documents en dossiers
               </p>
             </div>
 

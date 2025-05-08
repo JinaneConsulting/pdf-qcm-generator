@@ -1,19 +1,19 @@
 // src/components/layout/UnifiedSidebar.tsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
-import { UserRound, FileTextIcon, LogOut, Upload, FileSearch, Home, Shield } from 'lucide-react';
+import { UserRound, FileTextIcon, LogOut, Upload, FileSearch, Home, Shield, Folder } from 'lucide-react';
 import quizzaiLogo from '../../assets/quizzai-logo.svg';
 import { useAuth } from '../auth/AuthContext';
 
 interface UnifiedSidebarProps {
   children?: React.ReactNode;
-  currentPage?: 'home' | 'login' | 'register' | 'upload' | 'profile' | 'admin';
+  currentPage?: 'home' | 'login' | 'register' | 'upload' | 'profile' | 'admin' | 'folders';
   onNavigate?: (path: string) => void;
 }
 
 const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({ children, currentPage = 'home', onNavigate }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   // Fonction sécurisée pour vérifier si un élément contient une classe CSS spécifique
   const checkClassPresence = (element: Element | null, classToCheck: string): boolean => {
@@ -165,6 +165,17 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({ children, currentPage =
                 )}
               </button>
 
+              {/* Nouveau bouton Dossiers */}
+              <button
+                className={`w-full ${currentPage === 'folders' ? 'bg-blue-100 hover:bg-blue-200' : 'bg-blue-50 hover:bg-blue-100'} text-blue-600 py-2 px-3 rounded flex items-center justify-center gap-2`}
+                onClick={() => onNavigate?.('/folders')}
+              >
+                <Folder size={18} color="#2563eb" />
+                {!isSidebarCollapsed && (
+                  <span className="whitespace-nowrap">Dossiers</span>
+                )}
+              </button>
+
               <button
                 className={`w-full ${currentPage === 'profile' ? 'bg-blue-100 hover:bg-blue-200' : 'bg-blue-50 hover:bg-blue-100'} text-blue-600 py-2 px-3 rounded flex items-center justify-center gap-2`}
                 onClick={() => onNavigate?.('/profile')}
@@ -176,7 +187,7 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({ children, currentPage =
               </button>
 
               {/* Bouton Administration - visible uniquement pour les admins */}
-              {user && user.is_superuser && (
+              {isAdmin && (
                 <button
                   className={`w-full ${currentPage === 'admin' ? 'bg-blue-100 hover:bg-blue-200' : 'bg-blue-50 hover:bg-blue-100'} text-blue-600 py-2 px-3 rounded flex items-center justify-center gap-2`}
                   onClick={() => onNavigate?.('/admin')}
