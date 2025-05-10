@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+// src/components/layout/Sidebar.tsx
+import React from 'react';
 import { PanelLeftClose, PanelRight } from 'lucide-react';
 import { cn } from '../../lib/utils'; 
+import { useSidebar } from '../../contexts/SidebarContext';
 
 interface SidebarProps {
   children?: React.ReactNode;
@@ -8,26 +10,28 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ children, className }) => {
-  const [collapsed, setCollapsed] = useState(true);
+  const { isCollapsed, toggleSidebar } = useSidebar();
 
   return (
     <div className="relative flex h-full">
       <div
         className={cn(
           "transition-all duration-300 ease-in-out",
-          collapsed ? "w-16" : "w-72",
+          isCollapsed ? "w-16" : "w-72",
           className
         )}
+        data-sidebar-state={isCollapsed ? "collapsed" : "expanded"}
       >
         {children}
       </div>
       
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={toggleSidebar}
         className="absolute top-4 -right-3 bg-blue-50 text-blue-400 rounded-full p-1 shadow-sm z-10 transition-all duration-200 hover:bg-blue-100 focus:outline-none focus:ring-1 focus:ring-blue-200"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={isCollapsed ? "Développer" : "Réduire"}
       >
-        {collapsed ? 
+        {isCollapsed ? 
           <PanelRight size={16} /> : 
           <PanelLeftClose size={16} />
         }

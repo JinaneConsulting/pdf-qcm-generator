@@ -1,6 +1,6 @@
 // src/components/admin/AdminPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import UnifiedSidebar from '../layout/UnifiedSidebar';
 import { adminService, UserData, SessionData } from '../../services/adminService';

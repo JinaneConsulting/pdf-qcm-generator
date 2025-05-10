@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -26,9 +26,7 @@ const PasswordLoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
     try {
       // Utiliser l'URL API complète - debug
       const apiUrl = getApiUrl();
-      console.log('URL API complète:', apiUrl);
-      console.log('Tentative de connexion avec:', { email });
-      
+          
       // Utiliser notre nouvelle API d'authentification par mot de passe
       const formData = new URLSearchParams();
       formData.append('username', email);
@@ -45,8 +43,6 @@ const PasswordLoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
         body: formData
       });
 
-      console.log('Status de la réponse:', response.status);
-      
       if (!response.ok) {
         const responseText = await response.text();
         console.error('Réponse d\'erreur:', responseText);
@@ -63,8 +59,7 @@ const PasswordLoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
       }
 
       const responseText = await response.text();
-      console.log('Réponse brute:', responseText);
-      
+           
       let data;
       try {
         data = JSON.parse(responseText);

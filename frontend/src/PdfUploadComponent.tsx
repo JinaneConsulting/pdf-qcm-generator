@@ -3,7 +3,7 @@ import { FileUp, Loader2, FileText, CheckCircle, XCircle, Upload } from 'lucide-
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Progress } from './components/ui/progress';
-import { useAuth } from './components/auth/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import { BASIC_AUTH } from './config';
 
 interface PdfUploadComponentProps {
@@ -110,11 +110,7 @@ const PdfUploadComponent: React.FC<PdfUploadComponentProps> = ({ onUploadSuccess
     
     try {
       // Enregistrer l'URL complète pour le débogage
-      console.log('Uploading to:', `${apiUrl}/pdf/upload`);
-      console.log('Token:', token ? `${token.slice(0, 10)}...` : 'No token');
-      
       const xhr = new XMLHttpRequest();
-      
       // Suivi de la progression
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
@@ -129,7 +125,6 @@ const PdfUploadComponent: React.FC<PdfUploadComponentProps> = ({ onUploadSuccess
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const response = JSON.parse(xhr.responseText);
-              console.log('Response from server:', response);
               resolve({
                 file_id: response.file_id || response.id || 'unknown',
                 filename: response.filename || selectedFile.name

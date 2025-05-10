@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedSidebar from './components/layout/UnifiedSidebar';
 import PdfUploadComponent from './PdfUploadComponent';
-import { useAuth } from './components/auth/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Button } from './components/ui/button';
@@ -22,7 +22,7 @@ const PdfUploadPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleUploadSuccess = (id: string, name: string) => {
-    console.log('Upload successful, ID:', id, 'Name:', name);
+    ('Upload successful, ID:', id, 'Name:', name);
     setFileId(id);
     setFileName(name);
     setUploadSuccess(true);

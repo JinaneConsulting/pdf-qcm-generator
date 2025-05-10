@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 
@@ -14,24 +14,15 @@ const GoogleAuthCallback: React.FC = () => {
   useEffect(() => {
     const handleGoogleCallback = async () => {
       try {
-        console.log("GoogleAuthCallback: Processing callback...");
-        
+               
         // Récupérer les paramètres de l'URL
         const params = new URLSearchParams(location.search);
         const code = params.get('code');
         const state = params.get('state');
         const token = params.get('token'); // Si le token est directement dans l'URL
         
-        // Log pour le débogage
-        console.log("Auth parameters:", { 
-          hasCode: !!code, 
-          hasState: !!state, 
-          hasToken: !!token 
-        });
-        
         // Si on a déjà un token dans l'URL (depuis le backend)
         if (token) {
-          console.log("Token found directly in URL, storing and redirecting...");
           localStorage.setItem('token', token);
           setToken(token);
           setStatus("redirecting");
@@ -52,7 +43,6 @@ const GoogleAuthCallback: React.FC = () => {
         }
 
         // Envoyer le code au backend pour obtenir un token
-        console.log("Sending code to backend for token...");
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         const apiCredentials = import.meta.env.VITE_API_CREDENTIALS || '';
         
@@ -75,8 +65,7 @@ const GoogleAuthCallback: React.FC = () => {
 
         // Récupérer le token
         const data = await response.json();
-        console.log("Received response from backend:", { hasToken: !!data.access_token });
-        
+                
         // Stocker le token et mettre à jour le contexte
         localStorage.setItem('token', data.access_token);
         setToken(data.access_token);

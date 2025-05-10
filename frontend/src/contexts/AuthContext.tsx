@@ -1,6 +1,6 @@
 // Fichier amélioré pour src/components/auth/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { API_URL, BASIC_AUTH } from '../../config';
+import { API_URL, BASIC_AUTH } from '../config';
 
 interface User {
   id: string;
@@ -66,8 +66,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   // Fonction pour définir le token et le stocker dans localStorage
   const setToken = (newToken: string | null) => {
-    console.log("Setting token:", newToken ? newToken.substring(0, 10) + "..." : "null");
-
+    
     if (newToken) {
       localStorage.setItem('token', newToken);
       localStorage.setItem('auth_token', newToken); // Pour compatibilité
@@ -90,8 +89,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
       try {
         setIsLoading(true);
-        console.log("Fetching user with token:", token.substring(0, 10) + "...");
-
         const response = await fetch(`${API_URL}/custom/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -106,7 +103,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         }
 
         const userData = await response.json();
-        console.log("User data fetched successfully:", userData);
         setUser(userData);
         
         // Récupérer les sessions actives de l'utilisateur

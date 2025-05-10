@@ -8,7 +8,7 @@ import { Input } from './components/ui/input';
 import { RadioGroup, RadioGroupItem } from './components/ui/radio-group';
 import { Label } from './components/ui/label';
 import { Progress } from './components/ui/progress';
-import { useAuth } from './components/auth/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import AuthPage from './components/auth/AuthPage';
 import AuthCallback from './components/auth/AuthCallback';
 import GoogleAuthCallback from './components/auth/GoogleAuthCallback';

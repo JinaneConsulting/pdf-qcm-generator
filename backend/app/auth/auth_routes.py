@@ -1,4 +1,4 @@
-# app/auth/auth_routes.py - Version améliorée
+# app/auth/auth_routes.py - Version refactorisée
 import os
 import logging
 from typing import Dict, Optional
@@ -8,14 +8,15 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 from .auth_service import AuthService
+from .auth_middlewares import get_token_from_request, get_current_user, require_authenticated_user
 
 logger = logging.getLogger(__name__)
 
-# Configuration des URLs
+# Configuration des URLs depuis les variables d'environnement
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-# Création du router
+# Création du router principal d'authentification
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Initialisation du service d'authentification
@@ -89,27 +90,23 @@ async def logout(
     session: AsyncSession = Depends(get_async_session)
 ):
     """Déconnexion en révoquant le token"""
-    # Récupérer le token depuis l'en-tête Authorization
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or "Bearer " not in auth_header:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token d'authentification manquant",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    token = auth_header.replace("Bearer ", "")
-    
-    # Révoquer le token
-    success = await auth_service.logout(token, session)
-    
-    # Supprimer le cookie côté client
-    response.delete_cookie("auth_token")
-    
-    if not success:
-        return {"message": "Session déjà expirée ou invalide"}
-    
-    return {"message": "Déconnecté avec succès"}
+    try:
+        # Récupérer le token depuis l'en-tête Authorization
+        token = get_token_from_request(request)
+        
+        # Révoquer le token
+        success = await auth_service.logout(token, session)
+        
+        # Supprimer le cookie côté client
+        response.delete_cookie("auth_token")
+        
+        if not success:
+            return {"message": "Session déjà expirée ou invalide"}
+        
+        return {"message": "Déconnecté avec succès"}
+    except HTTPException:
+        # Gérer les erreurs d'authentification
+        return {"message": "Session invalide ou déjà expirée"}
 
 @router.post("/verify")
 async def verify_email(
@@ -187,19 +184,26 @@ async def google_login(response: Response):
     )
     
     redirect_uri = f"{BACKEND_URL}/auth/google/callback"
-    authorization_url = await google_client.get_authorization_url(
-        redirect_uri,
-        scope=["openid", "email", "profile"]
-    )
     
-    # Ajouter les CORS headers pour éviter les problèmes de redirection
-    response.headers["Access-Control-Allow-Origin"] = FRONTEND_URL
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization-Tunnel, Content-Type, Authorization"
-    
-    return RedirectResponse(url=authorization_url)
+    try:
+        authorization_url = await google_client.get_authorization_url(
+            redirect_uri,
+            scope=["openid", "email", "profile"]
+        )
+        
+        # Ajouter les CORS headers pour éviter les problèmes de redirection
+        response.headers["Access-Control-Allow-Origin"] = FRONTEND_URL
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization-Tunnel, Content-Type, Authorization"
+        
+        return RedirectResponse(url=authorization_url)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération de l'URL d'autorisation Google: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur de configuration OAuth Google"
+        )
 
-# Modification de la route de callback Google
 @router.get("/google/callback")
 async def google_callback(
     request: Request,
@@ -240,23 +244,15 @@ async def google_callback(
     
     return response
 
+# Routes pour la gestion des sessions
 @router.get("/sessions/active")
 async def get_active_sessions(
-    request: Request,
+    user: dict = Depends(require_authenticated_user),
     session: AsyncSession = Depends(get_async_session)
 ):
     """
     Récupère toutes les sessions actives de l'utilisateur authentifié
     """
-    # Récupérer l'utilisateur à partir du token dans l'en-tête
-    user, error = await auth_service.get_user_from_token(get_token_from_request(request), session)
-    if error:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=error,
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
     from sqlalchemy import select
     from app.models.user_model import AccessToken
     
@@ -267,11 +263,14 @@ async def get_active_sessions(
     ).order_by(AccessToken.created_at.desc())
     
     result = await session.execute(query)
-    sessions = result.scalars().all()
+    tokens = result.scalars().all()
+    
+    # Déterminer quelle est la session courante
+    current_token = get_token_from_request(request)
     
     # Formater les sessions pour la réponse
     return {
-        "count": len(sessions),
+        "count": len(tokens),
         "sessions": [
             {
                 "id": token.id,
@@ -279,9 +278,9 @@ async def get_active_sessions(
                 "expires_at": token.expires_at.isoformat(),
                 "ip_address": token.ip_address,
                 "user_agent": token.user_agent,
-                "current": token.token == get_token_from_request(request)
+                "current": token.token == current_token
             }
-            for token in sessions
+            for token in tokens
         ]
     }
 
@@ -289,20 +288,12 @@ async def get_active_sessions(
 async def revoke_session(
     session_id: int,
     request: Request,
+    user: dict = Depends(require_authenticated_user),
     session: AsyncSession = Depends(get_async_session)
 ):
     """
     Révoque une session spécifique de l'utilisateur authentifié
     """
-    # Récupérer l'utilisateur à partir du token dans l'en-tête
-    user, error = await auth_service.get_user_from_token(get_token_from_request(request), session)
-    if error:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=error,
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
     from app.models.user_model import AccessToken
     
     # Récupérer la session spécifiée
@@ -316,7 +307,8 @@ async def revoke_session(
         )
     
     # Si c'est la session courante, retourner une erreur
-    if token.token == get_token_from_request(request):
+    current_token = get_token_from_request(request)
+    if token.token == current_token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Vous ne pouvez pas révoquer votre session courante. Utilisez /auth/logout à la place."
@@ -331,34 +323,51 @@ async def revoke_session(
 @router.delete("/sessions/all")
 async def revoke_all_sessions(
     request: Request,
+    user: dict = Depends(require_authenticated_user),
     session: AsyncSession = Depends(get_async_session),
     keep_current: bool = Query(True, description="Garder la session courante")
 ):
     """
     Révoque toutes les sessions de l'utilisateur authentifié sauf la session courante (optionnel)
     """
-    # Récupérer l'utilisateur à partir du token dans l'en-tête
-    current_token = get_token_from_request(request)
-    user, error = await auth_service.get_user_from_token(current_token, session)
-    if error:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=error,
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    from sqlalchemy import select, delete
+    from sqlalchemy import delete
     from app.models.user_model import AccessToken
     
-    # Créer la requête de suppression
-    delete_query = delete(AccessToken).where(AccessToken.user_id == user.id)
+    # Récupérer le token courant
+    current_token = get_token_from_request(request)
     
-    if not user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux administrateurs"
+    # Créer la requête de suppression appropriée
+    if keep_current:
+        # Supprimer toutes les sessions sauf la courante
+        query = delete(AccessToken).where(
+            AccessToken.user_id == user.id,
+            AccessToken.token != current_token
         )
+    else:
+        # Supprimer toutes les sessions, y compris la courante
+        query = delete(AccessToken).where(AccessToken.user_id == user.id)
     
+    # Exécuter la requête et récupérer le nombre de lignes affectées
+    result = await session.execute(query)
+    sessions_count = result.rowcount
+    
+    # Valider les changements
+    await session.commit()
+    
+    return {
+        "message": f"{sessions_count} sessions révoquées avec succès",
+        "count": sessions_count,
+        "logout_required": not keep_current
+    }
+
+# Route pour les administrateurs pour nettoyer les tokens expirés
+@router.delete("/admin/sessions/expired")
+async def clean_expired_sessions(
+    request: Request,
+    session: AsyncSession = Depends(get_async_session),
+    user = Depends(require_admin_user)  # S'assure que l'utilisateur est un administrateur
+):
+    """Supprime tous les tokens expirés de la base de données"""
     from sqlalchemy import delete
     from app.models.user_model import AccessToken
     from datetime import datetime
@@ -369,7 +378,25 @@ async def revoke_all_sessions(
     count = result.rowcount
     await session.commit()
     
+    logger.info(f"Admin {user.email} a supprimé {count} tokens expirés")
+    
     return {
         "message": f"{count} tokens expirés supprimés",
         "count": count
+    }
+
+# Route pour obtenir les informations sur l'utilisateur actuel
+@router.get("/me")
+async def get_current_user_info(
+    user = Depends(require_authenticated_user)
+):
+    """Retourne les informations de l'utilisateur actuellement authentifié"""
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "profile_picture": user.profile_picture,
+        "is_active": user.is_active,
+        "is_verified": user.is_verified,
+        "is_superuser": user.is_superuser
     }

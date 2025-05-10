@@ -1,4 +1,5 @@
-# app/models/user_model.py
+# Modification à apporter à app/models/user_model.py
+
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import DateTime, ForeignKey, String, Boolean, func
@@ -51,9 +52,6 @@ class AccessToken(Base):
     user: Mapped["User"] = relationship(back_populates="access_tokens")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    
-    # Retiré le champ updated_at car il n'existe pas dans la base de données
-    # updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Ajouter ces champs pour plus d'informations sur le token
     ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)

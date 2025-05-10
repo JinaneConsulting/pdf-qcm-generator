@@ -1,6 +1,5 @@
-// src/components/user/ProfilePage.tsx
 import React, { useState } from 'react';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import UnifiedSidebar from '../layout/UnifiedSidebar';
 import PdfUploader from '../PdfUpLoader';

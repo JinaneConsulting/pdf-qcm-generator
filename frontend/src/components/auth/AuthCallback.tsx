@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 
@@ -14,16 +14,11 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        console.log("AuthCallback: URL complète:", window.location.href);
-        console.log("AuthCallback: Search params:", location.search);
         
         // Extraire le token de l'URL
         const searchParams = new URLSearchParams(location.search);
         const token = searchParams.get('token');
-        
-        console.log("Processing authentication callback...");
-        console.log("Token in URL:", token ? `Present (${token.substring(0, 10)}...)` : "Not present");
-        
+       
         if (!token) {
           console.error("Aucun token trouvé dans l'URL");
           setError("Aucun token trouvé dans l'URL. L'authentification a échoué.");
@@ -32,7 +27,6 @@ const AuthCallback: React.FC = () => {
         }
         
         // Stocker le token et mettre à jour le contexte d'authentification
-        console.log("Saving token and updating auth context...");
         localStorage.setItem('token', token);
         setToken(token);
         
@@ -41,7 +35,6 @@ const AuthCallback: React.FC = () => {
         
         // Petite pause pour laisser le temps au contexte de se mettre à jour
         setTimeout(() => {
-          console.log("Redirecting to home page...");
           navigate('/');
         }, 1000);
       } catch (error) {

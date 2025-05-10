@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -41,9 +41,7 @@ const PasswordRegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => 
     try {
       // Utiliser l'URL API complète - debug
       const apiUrl = getApiUrl();
-      console.log('URL API complète:', apiUrl);
-      console.log('Tentative d\'inscription avec:', { email });
-      
+           
       // Utiliser notre nouvelle API d'inscription par mot de passe
       const formData = new FormData();
       formData.append('email', email);
@@ -59,8 +57,6 @@ const PasswordRegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => 
         body: formData
       });
 
-      console.log('Status de la réponse:', response.status);
-      
       if (!response.ok) {
         const responseText = await response.text();
         console.error('Réponse d\'erreur:', responseText);
@@ -77,8 +73,7 @@ const PasswordRegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => 
       }
 
       const responseText = await response.text();
-      console.log('Réponse brute:', responseText);
-      
+            
       let data;
       try {
         data = JSON.parse(responseText);

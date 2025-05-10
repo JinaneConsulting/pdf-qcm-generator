@@ -1,7 +1,7 @@
-# app/models/pdf_model.py
+# app/models/pdf_model.py - Version mise à jour avec support des dossiers
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import ForeignKey, String, Boolean, Integer, DateTime, Text, func
+from sqlalchemy import ForeignKey, String, Boolean, Integer, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.base import Base
 

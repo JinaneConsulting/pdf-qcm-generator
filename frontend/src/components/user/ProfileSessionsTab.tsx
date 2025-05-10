@@ -1,6 +1,6 @@
 // src/components/user/ProfileSessionsTab.tsx
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
